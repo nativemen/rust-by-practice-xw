@@ -20,6 +20,7 @@ fn main() {
 ```
 
 2. 🌟
+
 ```rust,editable
 
 // 填空
@@ -47,6 +48,7 @@ fn type_of<T>(_: &T) -> String {
 ```
 
 4. 🌟🌟
+
 ```rust,editable
 
 // 填空，让代码工作
@@ -57,6 +59,7 @@ fn main() {
 ```
 
 5. 🌟🌟
+
 ```rust,editable
 
 // 解决代码中的错误和 `panic`
@@ -68,6 +71,7 @@ fn main() {
 ```
 
 6. 🌟🌟
+
 ```rust,editable
 
 // 修改 `assert!` 让代码工作
@@ -77,8 +81,8 @@ fn main() {
 }
 ```
 
-
 ### 浮点数
+
 7. 🌟
 
 ```rust,editable
@@ -102,19 +106,21 @@ fn type_of<T>(_: &T) -> String {
 
 8. 🌟🌟 使用两种方法来让下面代码工作
 
-
 ```rust,editable
 
 fn main() {
     assert!((0.1f32 + 0.2f32 - 0.3f32).abs() < std::f32::EPSILON);
 }
+```
 
+```rust,editable
 fn main() {
     assert!((0.1f64 + 0.2f64 - 0.3f64).abs() < std::f64::EPSILON);
 }
 ```
 
 ### 序列Range
+
 9. 🌟🌟 两个目标: 1. 修改 `assert!` 让它工作 2. 让 `println!` 输出: 97 - 122
 
 ```rust,editable
@@ -133,6 +139,7 @@ fn main() {
 ```
 
 10. 🌟🌟
+
 ```rust,editable
 
 // 填空
@@ -146,6 +153,7 @@ fn main() {
 ### 计算
 
 11. 🌟
+
 ```rust,editable
 
 // 填空，并解决错误
