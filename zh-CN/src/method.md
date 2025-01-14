@@ -1,6 +1,7 @@
 # 方法和关联函数
 
 ## 示例
+
 ```rust,editable
 struct Point {
     x: f64,
@@ -34,7 +35,7 @@ impl Rectangle {
         let Point { x: x1, y: y1 } = self.p1;
         let Point { x: x2, y: y2 } = self.p2;
 
-  
+
         // `abs` 是一个 `f64` 类型的方法，会返回调用者的绝对值
         ((x1 - x2) * (y1 - y2)).abs()
     }
@@ -111,6 +112,7 @@ fn main() {
 ## Exercises
 
 ### Method
+
 1. 🌟🌟 方法跟函数类似：都是使用 `fn` 声明，有参数和返回值。但是与函数不同的是，方法定义在结构体的上下文中(枚举、特征对象也可以定义方法)，而且方法的第一个参数一定是 `self` 或其变体 `&self` 、`&mut self`，`self` 代表了当前调用的结构体实例。
 
 ```rust,editable
@@ -121,11 +123,16 @@ struct Rectangle {
 
 impl Rectangle {
     // 完成 area 方法，返回矩形 Rectangle 的面积
-    fn area
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
 }
 
 fn main() {
-    let rect1 = Rectangle { width: 30, height: 50 };
+    let rect1 = Rectangle {
+        width: 30,
+        height: 50,
+    };
 
     assert_eq!(rect1.area(), 1500);
 }
@@ -141,12 +148,12 @@ struct TrafficLight {
 }
 
 impl TrafficLight {
-    pub fn show_state(__)  {
-        println!("the current state is {}", __.color);
+    pub fn show_state(&self) {
+        println!("the current state is {}", self.color);
     }
 }
 fn main() {
-    let light = TrafficLight{
+    let light = TrafficLight {
         color: "red".to_owned(),
     };
     // 不要拿走 `light` 的所有权
@@ -155,7 +162,9 @@ fn main() {
     println!("{:?}", light);
 }
 ```
+
 3. 🌟🌟  `&self` 实际上是 `self: &Self` 的缩写或者说语法糖
+
 ```rust,editable
 struct TrafficLight {
     color: String,
@@ -163,18 +172,17 @@ struct TrafficLight {
 
 impl TrafficLight {
     // 使用 `Self` 填空
-    pub fn show_state(__)  {
+    pub fn show_state(self: &Self) {
         println!("the current state is {}", self.color);
     }
 
     // 填空，不要使用 `Self` 或其变体
-    pub fn change_state(__) {
+    pub fn change_state(&mut self) {
         self.color = "green".to_string()
     }
 }
 fn main() {}
 ```
-
 
 ### Associated function
 
@@ -190,7 +198,11 @@ impl TrafficLight {
     // 1. 实现下面的关联函数 `new`,
     // 2. 该函数返回一个 TrafficLight 实例，包含 `color` "red"
     // 3. 该函数必须使用 `Self` 作为类型，不能在签名或者函数体中使用 `TrafficLight`
-    pub fn new() 
+    pub fn new() -> Self {
+        TrafficLight {
+            color: "red".to_string(),
+        }
+    }
 
     pub fn get_state(&self) -> &str {
         &self.color
@@ -204,7 +216,9 @@ fn main() {
 ```
 
 ### 多个 `impl` 语句块
+
 5. 🌟 每一个结构体允许拥有多个 `impl` 语句块
+
 ```rust,editable
 
 struct Rectangle {
@@ -217,17 +231,19 @@ impl Rectangle {
     fn area(&self) -> u32 {
         self.width * self.height
     }
+}
 
+impl Rectangle {
     fn can_hold(&self, other: &Rectangle) -> bool {
         self.width > other.width && self.height > other.height
     }
 }
 
-
 fn main() {}
 ```
 
 ### Enums
+
 6. 🌟🌟🌟 我们还可以为枚举类型定义方法
 
 ```rust,editable
@@ -241,7 +257,13 @@ enum TrafficLightColor {
 
 // 为 TrafficLightColor 实现所需的方法
 impl TrafficLightColor {
-    
+    fn color(&self) -> &'static str {
+        match self {
+            TrafficLightColor::Red => "red",
+            TrafficLightColor::Yellow => "yellow",
+            TrafficLightColor::Green => "green",
+        }
+    }
 }
 
 fn main() {
@@ -249,7 +271,7 @@ fn main() {
 
     assert_eq!(c.color(), "yellow");
 
-    println!("{:?}",c);
+    println!("{:?}", c);
 }
 ```
 
@@ -257,5 +279,4 @@ fn main() {
 
 @todo
 
-
-> 你可以在[这里](https://github.com/sunface/rust-by-practice/blob/master/solutions/method.md)找到答案(在 solutions 路径下) 
+> 你可以在[这里](https://github.com/sunface/rust-by-practice/blob/master/solutions/method.md)找到答案(在 solutions 路径下)
