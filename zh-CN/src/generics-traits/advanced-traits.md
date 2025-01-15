@@ -1,7 +1,9 @@
 # 进一步深入特征
 
 ## 关联类型
+
 关联类型主要用于提升代码的可读性，例如以下代码 :
+
 ```rust
 pub trait CacheableItem: Clone + Default + fmt::Debug + Decodable + Encodable {
   type Address: AsRef<[u8]> + Clone + fmt::Debug + Eq + Hash;
@@ -12,6 +14,7 @@ pub trait CacheableItem: Clone + Default + fmt::Debug + Decodable + Encodable {
 相比 `AsRef<[u8]> + Clone + fmt::Debug + Eq + Hash`， `Address` 的使用可以极大的减少其它类型在实现该特征时所需的模版代码.
 
 1. 🌟🌟🌟
+
 ```rust,editable
 
 struct Container(i32, i32);
@@ -21,24 +24,35 @@ struct Container(i32, i32);
 //    type A;
 //    type B;
 
-trait Contains<A, B> {
-    fn contains(&self, _: &A, _: &B) -> bool;
+trait Contains {
+    type A;
+    type B;
+
+    fn contains(&self, _: &Self::A, _: &Self::B) -> bool;
     fn first(&self) -> i32;
     fn last(&self) -> i32;
 }
 
-impl Contains<i32, i32> for Container {
+impl Contains for Container {
+    type A = i32;
+    type B = i32;
+
     fn contains(&self, number_1: &i32, number_2: &i32) -> bool {
-        (&self.0 == number_1) && (&self.1 == number_2)
+        (self.0 == *number_1) && (self.1 == *number_2)
     }
+
     // Grab the first number.
-    fn first(&self) -> i32 { self.0 }
+    fn first(&self) -> i32 {
+        self.0
+    }
 
     // Grab the last number.
-    fn last(&self) -> i32 { self.1 }
+    fn last(&self) -> i32 {
+        self.1
+    }
 }
 
-fn difference<A, B, C: Contains<A, B>>(container: &C) -> i32 {
+fn difference<C: Contains>(container: &C) -> i32 {
     container.last() - container.first()
 }
 
@@ -48,20 +62,85 @@ fn main() {
 
     let container = Container(number_1, number_2);
 
-    println!("Does container contain {} and {}: {}",
-        &number_1, &number_2,
-        container.contains(&number_1, &number_2));
+    println!(
+        "Does container contain {} and {}: {}",
+        &number_1,
+        &number_2,
+        container.contains(&number_1, &number_2)
+    );
     println!("First number: {}", container.first());
     println!("Last number: {}", container.last());
-    
+
+    println!("The difference is: {}", difference(&container));
+}
+```
+
+```rust,editable
+
+struct Container(i32, i32);
+
+// 使用关联类型实现重新实现以下特征
+// trait Contains {
+//    type A;
+//    type B;
+
+trait Contains {
+    type A;
+    type B;
+
+    fn contains(&self, _: &Self::A, _: &Self::B) -> bool;
+    fn first(&self) -> i32;
+    fn last(&self) -> i32;
+}
+
+impl Contains for Container {
+    type A = i32;
+    type B = i32;
+
+    fn contains(&self, number_1: &Self::A, number_2: &Self::B) -> bool {
+        (self.0 == *number_1) && (self.1 == *number_2)
+    }
+
+    // Grab the first number.
+    fn first(&self) -> i32 {
+        self.0
+    }
+
+    // Grab the last number.
+    fn last(&self) -> i32 {
+        self.1
+    }
+}
+
+fn difference<C: Contains>(container: &C) -> i32 {
+    container.last() - container.first()
+}
+
+fn main() {
+    let number_1 = 3;
+    let number_2 = 10;
+
+    let container = Container(number_1, number_2);
+
+    println!(
+        "Does container contain {} and {}: {}",
+        &number_1,
+        &number_2,
+        container.contains(&number_1, &number_2)
+    );
+    println!("First number: {}", container.first());
+    println!("Last number: {}", container.last());
+
     println!("The difference is: {}", difference(&container));
 }
 ```
 
 ## 定义默认的泛型类型参数
+
 当我们使用泛型类型参数时，可以为该泛型参数指定一个具体的默认类型，这样当实现该特征时，如果该默认类型可以使用，那用户再无需手动指定具体的类型。
 
 2. 🌟🌟
+
 ```rust,editable
 
 use std::ops::Sub;
@@ -73,7 +152,7 @@ struct Point<T> {
 }
 
 // 用三种方法填空: 其中两种使用默认的泛型参数，另外一种不使用
-impl __ {
+impl<T: Sub<Output = T>> Sub<Point<T>> for Point<T> {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self::Output {
@@ -85,18 +164,120 @@ impl __ {
 }
 
 fn main() {
-    assert_eq!(Point { x: 2, y: 3 } - Point { x: 1, y: 0 },
-        Point { x: 1, y: 3 });
+    assert_eq!(
+        Point { x: 2, y: 3 } - Point { x: 1, y: 0 },
+        Point { x: 1, y: 3 }
+    );
+
+    println!("Success!")
+}
+```
+
+```rust,editable
+
+use std::ops::Sub;
+
+#[derive(Debug, PartialEq)]
+struct Point<T> {
+    x: T,
+    y: T,
+}
+
+// 用三种方法填空: 其中两种使用默认的泛型参数，另外一种不使用
+impl<T: Sub<Output = T>> Sub<Self> for Point<T> {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Point {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+}
+
+fn main() {
+    assert_eq!(
+        Point { x: 2, y: 3 } - Point { x: 1, y: 0 },
+        Point { x: 1, y: 3 }
+    );
+
+    println!("Success!")
+}
+```
+
+```rust,editable
+
+use std::ops::Sub;
+
+#[derive(Debug, PartialEq)]
+struct Point<T> {
+    x: T,
+    y: T,
+}
+
+// 用三种方法填空: 其中两种使用默认的泛型参数，另外一种不使用
+impl<T: Sub<Output = T>> Sub for Point<T> {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Point {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+}
+
+fn main() {
+    assert_eq!(
+        Point { x: 2, y: 3 } - Point { x: 1, y: 0 },
+        Point { x: 1, y: 3 }
+    );
+
+    println!("Success!")
+}
+```
+
+```rust,editable
+
+use std::ops::Sub;
+
+#[derive(Debug, PartialEq)]
+struct Point<T> {
+    x: T,
+    y: T,
+}
+
+// 用三种方法填空: 其中两种使用默认的泛型参数，另外一种不使用
+impl<T> Sub for Point<T>
+where
+    T: Sub<Output = T>,
+{
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Point {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+}
+
+fn main() {
+    assert_eq!(
+        Point { x: 2, y: 3 } - Point { x: 1, y: 0 },
+        Point { x: 1, y: 3 }
+    );
 
     println!("Success!")
 }
 ```
 
 ## 完全限定语法
+
 在 Rust 中，两个不同特征的方法完全可以同名，且你可以为同一个类型同时实现这两个特征。这种情况下，就出现了一个问题：该如何调用这两个特征上定义的同名方法。为了解决这个问题，我们需要使用完全限定语法( Fully Qualified Syntax )。
 
-
 #### 示例
+
 ```rust,editable
 trait UsernameWidget {
     fn get(&self) -> String;
@@ -131,9 +312,9 @@ fn main() {
 
     // 如果你反注释下面一行代码，将看到一个错误: Fully Qualified Syntax
     // 毕竟，这里有好几个同名的 `get` 方法
-    // 
+    //
     // println!("{}", form.get());
-    
+
     let username = UsernameWidget::get(&form);
     assert_eq!("rustacean".to_owned(), username);
     let age = AgeWidget::get(&form); // 你还可以使用以下语法 `<Form as AgeWidget>::get`
@@ -144,7 +325,9 @@ fn main() {
 ```
 
 #### 练习题
+
 3. 🌟🌟
+
 ```rust,editable
 trait Pilot {
     fn fly(&self) -> String;
@@ -177,19 +360,62 @@ impl Human {
 fn main() {
     let person = Human;
 
-    assert_eq!(__, "This is your captain speaking.");
-    assert_eq!(__, "Up!");
+    assert_eq!(Pilot::fly(&person), "This is your captain speaking.");
+    assert_eq!(Wizard::fly(&person), "Up!");
 
-    assert_eq!(__, "*waving arms furiously*");
+    assert_eq!(Human::fly(&person), "*waving arms furiously*");
+
+    println!("Success!")
+}
+```
+
+```rust,editable
+trait Pilot {
+    fn fly(&self) -> String;
+}
+
+trait Wizard {
+    fn fly(&self) -> String;
+}
+
+struct Human;
+
+impl Pilot for Human {
+    fn fly(&self) -> String {
+        String::from("This is your captain speaking.")
+    }
+}
+
+impl Wizard for Human {
+    fn fly(&self) -> String {
+        String::from("Up!")
+    }
+}
+
+impl Human {
+    fn fly(&self) -> String {
+        String::from("*waving arms furiously*")
+    }
+}
+
+fn main() {
+    let person = Human;
+
+    assert_eq!(Pilot::fly(&person), "This is your captain speaking.");
+    assert_eq!(Wizard::fly(&person), "Up!");
+
+    assert_eq!(person.fly(), "*waving arms furiously*");
 
     println!("Success!")
 }
 ```
 
 ## Supertraits
+
 有些时候我们希望在特征上实现类似继承的特性，例如让一个特征 `A` 使用另一个特征 `B` 的功能。这种情况下，一个类型要实现特征 `A` 首先要实现特征 `B`， 特征 `B` 就被称为 `supertrait`
 
 4. 🌟🌟🌟
+
 ```rust,editable
 
 trait Person {
@@ -206,7 +432,7 @@ trait Programmer {
     fn fav_language(&self) -> String;
 }
 
-// CompSciStudent (computer science student) 是 Programmer 
+// CompSciStudent (computer science student) 是 Programmer
 // 和 Student 的 subtrait. 实现 CompSciStudent 需要先实现这两个 supertraits.
 trait CompSciStudent: Programmer + Student {
     fn git_username(&self) -> String;
@@ -226,35 +452,58 @@ struct CSStudent {
     name: String,
     university: String,
     fav_language: String,
-    git_username: String
+    git_username: String,
 }
 
 // 为 CSStudent 实现所需的特征
-impl ...
+impl Person for CSStudent {
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+}
+
+impl Student for CSStudent {
+    fn university(&self) -> String {
+        self.university.clone()
+    }
+}
+
+impl Programmer for CSStudent {
+    fn fav_language(&self) -> String {
+        self.fav_language.clone()
+    }
+}
+
+impl CompSciStudent for CSStudent {
+    fn git_username(&self) -> String {
+        self.git_username.clone()
+    }
+}
 
 fn main() {
     let student = CSStudent {
         name: "Sunfei".to_string(),
         university: "XXX".to_string(),
         fav_language: "Rust".to_string(),
-        git_username: "sunface".to_string()
+        git_username: "sunface".to_string(),
     };
 
     // 填空
-    println!("{}", comp_sci_student_greeting(__));
+    println!("{}", comp_sci_student_greeting(&student));
 }
 ```
 
 ## 孤儿原则
+
 关于孤儿原则的详细介绍请参见[特征定义与实现的位置孤儿规则](https://course.rs/basic/trait/trait#特征定义与实现的位置孤儿规则) 和 [在外部类型上实现外部特征](https://course.rs/basic/trait/advance-trait.html#在外部类型上实现外部特征newtype)。
 
-
 5. 🌟🌟
+
 ```rust,editable
 use std::fmt;
 
 // 定义一个 newtype `Pretty`
-
+struct Pretty(String);
 
 impl fmt::Display for Pretty {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -268,4 +517,4 @@ fn main() {
 }
 ```
 
-> 你可以在[这里](https://github.com/sunface/rust-by-practice/blob/master/solutions/generics-traits/advanced-trait.md)找到答案(在 solutions 路径下) 
+> 你可以在[这里](https://github.com/sunface/rust-by-practice/blob/master/solutions/generics-traits/advanced-trait.md)找到答案(在 solutions 路径下)
