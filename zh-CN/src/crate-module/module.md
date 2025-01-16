@@ -1,4 +1,5 @@
 # Module
+
 在 Rust 语言圣经中，我们已经深入讲解过[模块module](https://course.rs/basic/crate-module/module.html)，这里就不再赘述，直接开始我们的练习。
 
 之前我们创建了一个 package `hello-package`，它的目录结构在经过多次修改后，变成了以下模样:
@@ -14,6 +15,7 @@
 下面，我们来为其中的库包创建一些模块，然后在二进制包中使用这些模块。
 
 1. 🌟🌟 根据以下的模块树描述实现模块 `front_of_house` :
+
 ```shell
 库包的根(src/lib.rs)
  └── front_of_house
@@ -29,13 +31,23 @@
 
 ```rust,editable
 // 填空
-// in __.rs
+// in lib.rs
 
 mod front_of_house {
     // 实现此模块
+    mod hosting {
+        fn add_to_waitlist() {}
+        fn seat_at_table() {}
+    }
+
+    mod serving {
+        fn take_order() {}
+        fn serve_order() {}
+        fn take_payment() {}
+        fn complain() {}
+    }
 }
 ```
-
 
 2. 🌟🌟 让我们在库包的根中定义一个函数 `eat_at_restaurant`, 然后在该函数中调用之前创建的函数 `eat_at_restaurant`
 
@@ -45,20 +57,32 @@ mod front_of_house {
 // 填空并修复错误
 
 // 提示：你需要通过 `pub` 将一些项标记为公有的，这样模块 `front_of_house` 中的项才能被模块外的项访问
-mod front_of_house {
+pub mod front_of_house {
     /* ...snip... */
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+        pub fn seat_at_table() {}
+    }
+
+    pub mod serving {
+        pub fn take_order() {}
+        pub fn serve_order() {}
+        pub fn take_payment() {}
+        pub fn complain() {}
+    }
 }
 
 pub fn eat_at_restaurant() {
     // 使用绝对路径调用
-    __.add_to_waitlist();
+    crate::front_of_house::hosting::add_to_waitlist();
 
     // 使用相对路径调用
-     __.add_to_waitlist();
+     front_of_house::hosting::add_to_waitlist();
 }
 ```
 
 3. 🌟🌟 我们还可以使用 `super` 来导入父模块中的项
+
 ```rust,editable
 // in lib.rs
 
@@ -68,15 +92,17 @@ mod back_of_house {
         // 使用三种方式填空
         //1. 使用关键字 `super`
         //2. 使用绝对路径
-        __.serve_order();
+        super::front_of_house::serving::serve_order();
+        crate::front_of_house::serving::serve_order();
+        front_of_house::serving::serve_order();
     }
 
     fn cook_order() {}
 }
 ```
 
-
 ### 将模块分离并放入独立的文件中
+
 ```rust
 // in lib.rs
 pub mod front_of_house {
@@ -96,13 +122,13 @@ pub mod front_of_house {
         pub fn take_payment() {}
 
         // 我猜你不希望顾客听到你在抱怨他们，因此让这个函数私有化吧
-        fn complain() {} 
+        fn complain() {}
     }
 }
 
 pub fn eat_at_restaurant() -> String {
     front_of_house::hosting::add_to_waitlist();
-    
+
     back_of_house::cook_order();
 
     String::from("yummy yummy!")
@@ -119,6 +145,7 @@ pub mod back_of_house {
 ```
 
 4. 🌟🌟🌟🌟 请将上面的模块和代码分离到以下目录文件中e :
+
 ```shell
 .
 ├── Cargo.toml
@@ -136,37 +163,71 @@ pub mod back_of_house {
 // in src/lib.rs
 
 // IMPLEMENT...
+pub mod front_of_house;
+mod back_of_house;
+
+pub fn eat_at_restaurant() -> String {
+    front_of_house::hosting::add_to_waitlist();
+
+    back_of_house::cook_order();
+
+    String::from("yummy yummy!")
+}
 ```
 
 ```rust,editable
 // in src/back_of_house.rs
 
 // IMPLEMENT...
-```
+use crate::front_of_house;
 
+pub fn fix_incorrect_order() {
+    cook_order();
+    front_of_house::serving::serve_order();
+}
+
+pub fn cook_order() {}
+```
 
 ```rust,editable
 // in src/front_of_house/mod.rs
 
 // IMPLEMENT...
+pub mod hosting;
+pub mod serving;
 ```
 
 ```rust,editable
 // in src/front_of_house/hosting.rs
 
 // IMPLEMENT...
+pub fn add_to_waitlist() {}
+
+pub fn seat_at_table() -> String {
+    String::from("sit down please")
+}
 ```
 
 ```rust,editable
 // in src/front_of_house/serving.rs
 
 // IMPLEMENT...
+pub fn take_order() {}
+
+pub fn serve_order() {}
+
+pub fn take_payment() {}
+
+// 我猜你不希望顾客听到你在抱怨他们，因此让这个函数私有化吧
+fn complain() {}
 ```
 
 ### 从二进制包中访问库包的代码
+
 **请确保你已经完成了第四题，然后再继续进行.**
 
-当到底此处时，你的项目结构应该如下所示: 
+当到底此处时，你的项目结构应该如下所示:
+
 ```shell
 .
 ├── Cargo.toml
@@ -187,9 +248,9 @@ pub mod back_of_house {
 
 // 填空并修复错误
 fn main() {
-    assert_eq!(__, "sit down please");
-    assert_eq!(__,"yummy yummy!");
+    assert_eq!(hello-package1::front_of_house::hosting::seat_at_table(), "sit down please");
+    assert_eq!(hello-package1::eat_at_restaurant(),"yummy yummy!");
 }
 ```
 
-> 你可以在[这里](https://github.com/sunface/rust-by-practice/blob/master/solutions/crate-module/module.md)找到答案(在 solutions 路径下) 
+> 你可以在[这里](https://github.com/sunface/rust-by-practice/blob/master/solutions/crate-module/module.md)找到答案(在 solutions 路径下)
