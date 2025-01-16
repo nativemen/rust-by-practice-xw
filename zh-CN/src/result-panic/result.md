@@ -1,4 +1,5 @@
 # result and ?
+
 `Result<T>` 是一个枚举类型用于描述返回的结果或错误，它包含两个成员(变体 variants) :
 
 - `Ok(T)`: 返回一个结果值 T
@@ -6,14 +7,14 @@
 
 简而言之，如果期待一个正确的结果，就返回 `Ok`，反之则是 `Err`。
 
-
 1. 🌟🌟
+
 ```rust,editable
 
 // 填空并修复错误
 use std::num::ParseIntError;
 
-fn multiply(n1_str: &str, n2_str: &str) -> __ {
+fn multiply(n1_str: &str, n2_str: &str) -> Result<i32, ParseIntError> {
     let n1 = n1_str.parse::<i32>();
     let n2 = n2_str.parse::<i32>();
     Ok(n1.unwrap() * n2.unwrap())
@@ -21,26 +22,31 @@ fn multiply(n1_str: &str, n2_str: &str) -> __ {
 
 fn main() {
     let result = multiply("10", "2");
-    assert_eq!(result, __);
+    assert_eq!(result, Ok(20));
 
-    let result = multiply("t", "2");
-    assert_eq!(result.__, 8);
+    let result = multiply("4", "2");
+    assert_eq!(result.unwrap(), 8);
 
     println!("Success!")
 }
 ```
 
-### ? 
+### ?
+
 `?` 跟 `unwrap` 非常像，但是 `?` 会返回一个错误，而不是直接 panic.
 
 2. 🌟🌟
+
 ```rust,editable
 
 use std::num::ParseIntError;
 
 // 使用 `?` 来实现 multiply
 // 不要使用 unwrap !
-fn multiply(n1_str: &str, n2_str: &str) -> __ {
+fn multiply(n1_str: &str, n2_str: &str) -> Result<i32, ParseIntError> {
+    let n1 = n1_str.parse::<i32>()?;
+    let n2 = n2_str.parse::<i32>()?;
+    Ok(n1 * n2)
 }
 
 fn main() {
@@ -50,9 +56,10 @@ fn main() {
 ```
 
 3. 🌟🌟
+
 ```rust,editable
 
-use std::fs::File;
+use std::fs::{read_to_string, File};
 use std::io::{self, Read};
 
 fn read_file1() -> Result<String, io::Error> {
@@ -74,28 +81,47 @@ fn read_file1() -> Result<String, io::Error> {
 fn read_file2() -> Result<String, io::Error> {
     let mut s = String::new();
 
-    __;
+    File::open("hello.txt")?.read_to_string(&mut s)?;
 
     Ok(s)
 }
 
 fn main() {
-    assert_eq!(read_file1().unwrap_err().to_string(), read_file2().unwrap_err().to_string());
+    assert_eq!(
+        read_file1().unwrap_err().to_string(),
+        read_file2().unwrap_err().to_string()
+    );
     println!("Success!")
 }
 ```
 
 ### map & and_then
+
 [map](https://doc.rust-lang.org/stable/std/result/enum.Result.html#method.map) and [and_then](https://doc.rust-lang.org/stable/std/result/enum.Result.html#method.and_then) 是两个常用的组合器( combinator )，可以用于 `Result<T, E>` (也可用于 `Option<T>`).
 
-4. 🌟🌟 
+4. 🌟🌟
 
 ```rust,editable
 use std::num::ParseIntError;
 
 // 使用两种方式填空: map, and then
 fn add_two(n_str: &str) -> Result<i32, ParseIntError> {
-   n_str.parse::<i32>().__
+    n_str.parse::<i32>().map(|num| num + 2)
+}
+
+fn main() {
+    assert_eq!(add_two("4").unwrap(), 6);
+
+    println!("Success!")
+}
+```
+
+```rust,editable
+use std::num::ParseIntError;
+
+// 使用两种方式填空: map, and then
+fn add_two(n_str: &str) -> Result<i32, ParseIntError> {
+    n_str.parse::<i32>().and_then(|num| Ok(num + 2))
 }
 
 fn main() {
@@ -106,6 +132,7 @@ fn main() {
 ```
 
 5. 🌟🌟🌟
+
 ```rust,editable
 use std::num::ParseIntError;
 
@@ -113,13 +140,9 @@ use std::num::ParseIntError;
 // 但是这种写法实在过于啰嗦..
 fn multiply(n1_str: &str, n2_str: &str) -> Result<i32, ParseIntError> {
     match n1_str.parse::<i32>() {
-        Ok(n1)  => {
-            match n2_str.parse::<i32>() {
-                Ok(n2)  => {
-                    Ok(n1 * n2)
-                },
-                Err(e) => Err(e),
-            }
+        Ok(n1) => match n2_str.parse::<i32>() {
+            Ok(n2) => Ok(n1 * n2),
+            Err(e) => Err(e),
         },
         Err(e) => Err(e),
     }
@@ -129,11 +152,14 @@ fn multiply(n1_str: &str, n2_str: &str) -> Result<i32, ParseIntError> {
 // 提示：使用 `and_then` 和 `map`
 fn multiply1(n1_str: &str, n2_str: &str) -> Result<i32, ParseIntError> {
     // 实现...
+    n1_str
+        .parse::<i32>()
+        .and_then(|num1| n2_str.parse::<i32>().map(|num2| num1 * num2))
 }
 
 fn print(result: Result<i32, ParseIntError>) {
     match result {
-        Ok(n)  => println!("n is {}", n),
+        Ok(n) => println!("n is {}", n),
         Err(e) => println!("Error: {}", e),
     }
 }
@@ -151,28 +177,32 @@ fn main() {
 ```
 
 ### 类型别名
+
 如果我们要在代码中到处使用 `std::result::Result<T, ParseIntError>` ，那毫无疑问，代码将变得特别冗长和啰嗦，对于这种情况，可以使用类型别名来解决。
 
 例如在标准库中，就在大量使用这种方式来简化代码: [`io::Result`](https://doc.rust-lang.org/std/io/type.Result.html).
 
 6. 🌟
+
 ```rust,editable
 use std::num::ParseIntError;
 
 // 填空
-type __;
+type Res<T> = Result<T, ParseIntError>;
 
 // 使用上面的别名来引用原来的 `Result` 类型
 fn multiply(first_number_str: &str, second_number_str: &str) -> Res<i32> {
     first_number_str.parse::<i32>().and_then(|first_number| {
-        second_number_str.parse::<i32>().map(|second_number| first_number * second_number)
+        second_number_str
+            .parse::<i32>()
+            .map(|second_number| first_number * second_number)
     })
 }
 
 // 同样, 这里也使用了类型别名来简化代码
 fn print(result: Res<i32>) {
     match result {
-        Ok(n)  => println!("n is {}", n),
+        Ok(n) => println!("n is {}", n),
         Err(e) => println!("Error: {}", e),
     }
 }
@@ -186,12 +216,15 @@ fn main() {
 ```
 
 ### 在 `fn main` 中使用 `Result`
-一个典型的 `main` 函数长这样: 
+
+一个典型的 `main` 函数长这样:
+
 ```rust
 fn main() {
     println!("Hello World!");
 }
 ```
+
 事实上 `main` 函数还可以返回一个 `Result` 类型：如果 `main` 函数内部发生了错误，那该错误会被返回并且打印出一条错误的 debug 信息。
 
 ```rust,editable
@@ -208,4 +241,5 @@ fn main() -> Result<(), ParseIntError> {
     Ok(())
 }
 ```
+
 > 你可以在[这里](https://github.com/sunface/rust-by-practice/blob/master/solutions/result-panic/result.md)找到答案(在 solutions 路径下)
