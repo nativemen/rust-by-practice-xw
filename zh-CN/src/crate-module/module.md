@@ -164,7 +164,7 @@ pub mod back_of_house {
 
 // IMPLEMENT...
 pub mod front_of_house;
-mod back_of_house;
+pub mod back_of_house;
 
 pub fn eat_at_restaurant() -> String {
     front_of_house::hosting::add_to_waitlist();
