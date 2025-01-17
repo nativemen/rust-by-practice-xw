@@ -107,17 +107,17 @@ fn main() {
 fn main() {
     // 基于 `&str` 类型创建一个 String,
     // 字符串字面量的类型是 `&str`
-   let s: String = String::from("hello, world!");
+    let s: String = String::from("hello, world!");
 
-   // 创建一个切片引用指向 String `s`
-   let slice: &str = &s;
+    // 创建一个切片引用指向 String `s`
+    let slice: &str = &s;
 
-   // 基于刚创建的切片来创建一个 String
-   let s: String = slice.to_string();
+    // 基于刚创建的切片来创建一个 String
+    let s: String = slice.to_string();
 
-   assert_eq!(s, "hello, world!");
+    assert_eq!(s, "hello, world!");
 
-   println!("Success!")
+    println!("Success!")
 }
 ```
 
@@ -163,10 +163,10 @@ fn main() {
 ```rust
 use utf8_slice;
 fn main() {
-   let s = "The 🚀 goes to the 🌑!";
+    let s = "The 🚀 goes to the 🌑!";
 
-   let rocket = utf8_slice::slice(s, 4, 5);
-   // Will equal "🚀"
+    let rocket = utf8_slice::slice(s, 4, 5);
+    // Will equal "🚀"
 }
 ```
 
