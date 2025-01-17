@@ -1,11 +1,14 @@
 # 深入生命周期
 
 ## 特征约束
+
 就像泛型类型可以有约束一样，生命周期也可以有约束 ，如下所示：
+
 - `T: 'a`，所有引用在 `T` 必须超过生命周期 `'a`
 - `T: Trait + 'a`: `T` 必须实现特征 `Trait` 并且所有引用在 `T` 必须超过生命周期 `'a`
 
 **示例**
+
 ```rust,editable
 use std::fmt::Debug; // 特征约束使用
 
@@ -40,29 +43,30 @@ fn main() {
 ```
 
 1. 🌟
+
 ```rust,editable
 /* 使用生命周期注释结构体
 1. `r` 和 `s` 必须是不同生命周期
 2. `s` 的生命周期需要大于 'r'
 */
-struct DoubleRef<T> {
-    r: &T,
-    s: &T
+struct DoubleRef<'a, 'b: 'a, T> {
+    r: &'a T,
+    s: &'b T,
 }
 fn main() {
     println!("Success!")
 }
 ```
 
-
 2. 🌟🌟
+
 ```rust,editable
 /* 添加类型约束使下面代码正常运行 */
 struct ImportantExcerpt<'a> {
     part: &'a str,
 }
 
-impl<'a, 'b> ImportantExcerpt<'a> {
+impl<'a: 'b, 'b> ImportantExcerpt<'a> {
     fn announce_and_return_part(&'a self, announcement: &'b str) -> &'b str {
         println!("Attention please: {}", announcement);
         self.part
@@ -75,11 +79,27 @@ fn main() {
 ```
 
 3. 🌟🌟
+
 ```rust,editable
 /* 添加类型约束使下面代码正常运行 */
-fn f<'a, 'b>(x: &'a i32, mut y: &'b i32) {
-    y = x;                      
-    let r: &'b &'a i32 = &&0;   
+fn f<'a: 'b, 'b>(x: &'a i32, mut y: &'b i32) {
+    y = x;
+    let r: &'b &'a i32 = &&0;
+}
+
+fn main() {
+    println!("Success!")
+}
+```
+
+```rust,editable
+/* 添加类型约束使下面代码正常运行 */
+fn f<'a, 'b>(x: &'a i32, mut y: &'b i32)
+where
+    'a: 'b,
+{
+    y = x;
+    let r: &'b &'a i32 = &&0;
 }
 
 fn main() {
@@ -88,6 +108,7 @@ fn main() {
 ```
 
 ## HRTB（更高等级特征约束）(Higher-ranked trait bounds)
+
 类型约束可能在生命周期中排名更高。这些约束指定了一个约束对于所有生命周期都为真。例如，诸如此类的约束 `for<'a> &'a T: PartialEq<i32>` 需要如下实现：
 
 ```rust
@@ -101,9 +122,13 @@ impl<'a> PartialEq<i32> for &'a T {
 这里只能使用更高级别的约束，因为引用的生命周期比函数上任何可能的生命周期参数都短。
 
 4. 🌟🌟🌟
+
 ```rust
 /* 添加 HRTB 使下面代码正常运行！ */
-fn call_on_ref_zero<'a, F>(f: F) where F: Fn(&'a i32) {
+fn call_on_ref_zero<F>(f: F)
+where
+    F: Fn(&i32),
+{
     let zero = 0;
     f(&zero);
 }
@@ -112,8 +137,41 @@ fn main() {
     println!("Success!")
 }
 ```
+
+```rust
+/* 添加 HRTB 使下面代码正常运行！ */
+fn call_on_ref_zero<F>(f: F)
+where
+    for<'a> F: Fn(&'a i32),
+{
+    let zero = 0;
+    f(&zero);
+}
+
+fn main() {
+    println!("Success!")
+}
+```
+
+```rust
+/* 添加 HRTB 使下面代码正常运行！ */
+fn call_on_ref_zero<F>(f: F)
+where
+    F: for<'a> Fn(&'a i32),
+{
+    let zero = 0;
+    f(&zero);
+}
+
+fn main() {
+    println!("Success!")
+}
+```
+
 ## NLL（非词汇生命周期）(Non-Lexical Lifetime)
+
 在解释 NLL 之前，我们先看一段代码：
+
 ```rust
 fn main() {
    let mut s = String::from("hello");
@@ -159,6 +217,7 @@ use(a);                 //   |                            |
 学习了 NLL 之后，我们现在可以很容易地理解再借用了。
 
 **示例**
+
 ```rust
 #[derive(Debug)]
 struct Point {
@@ -187,8 +246,8 @@ fn main() {
 }
 ```
 
-
 5. 🌟🌟
+
 ```rust,editable
 /* 通过重新排序一些代码使下面代码正常运行 */
 fn main() {
@@ -196,17 +255,16 @@ fn main() {
     let ref1 = &mut data;
     let ref2 = &mut *ref1;
 
-    *ref1 += 1;
     *ref2 += 2;
+    *ref1 += 1;
 
     println!("{}", data);
 }
 ```
 
-
 ## 未约束的生命周期
-在 [Nomicon - Unbounded Lifetimes](https://doc.rust-lang.org/nomicon/unbounded-lifetimes.html) 中查看更多信息。
 
+在 [Nomicon - Unbounded Lifetimes](https://doc.rust-lang.org/nomicon/unbounded-lifetimes.html) 中查看更多信息。
 
 ## 更多省略规则
 
@@ -217,7 +275,7 @@ impl<'a> Reader for BufReader<'a> {
 
 // 可以写为：
 impl Reader for BufReader<'_> {
-    
+
 }
 ```
 
@@ -233,14 +291,14 @@ struct Ref<'a, T> {
 }
 ```
 
-
 ## 艰难的练习
 
 6. 🌟🌟🌟🌟
+
 ```rust
 /* 使下面代码正常运行 */
 struct Interface<'a> {
-    manager: &'a mut Manager<'a>
+    manager: &'a mut Manager,
 }
 
 impl<'a> Interface<'a> {
@@ -249,8 +307,53 @@ impl<'a> Interface<'a> {
     }
 }
 
+struct Manager {
+    text: &'static str,
+}
+
+struct List {
+    manager: Manager,
+}
+
+impl List {
+    pub fn get_interface<'b>(&'b mut self) -> Interface<'b> {
+        Interface {
+            manager: &mut self.manager,
+        }
+    }
+}
+
+fn main() {
+    let mut list = List {
+        manager: Manager { text: "hello" },
+    };
+
+    list.get_interface().noop();
+
+    println!("Interface should be dropped here and the borrow released");
+
+    use_list(&list);
+}
+
+fn use_list(list: &List) {
+    println!("{}", list.manager.text);
+}
+```
+
+```rust
+/* 使下面代码正常运行 */
+struct Interface<'a: 'b, 'b> {
+    manager: &'b mut Manager<'a>,
+}
+
+impl<'a: 'b, 'b> Interface<'a, 'b> {
+    pub fn noop(self) {
+        println!("interface consumed");
+    }
+}
+
 struct Manager<'a> {
-    text: &'a str
+    text: &'a str,
 }
 
 struct List<'a> {
@@ -258,18 +361,19 @@ struct List<'a> {
 }
 
 impl<'a> List<'a> {
-    pub fn get_interface(&'a mut self) -> Interface {
+    pub fn get_interface<'b>(&'b mut self) -> Interface<'a, 'b>
+    where
+        'a: 'b,
+    {
         Interface {
-            manager: &mut self.manager
+            manager: &mut self.manager,
         }
     }
 }
 
 fn main() {
     let mut list = List {
-        manager: Manager {
-            text: "hello"
-        }
+        manager: Manager { text: "hello" },
     };
 
     list.get_interface().noop();
