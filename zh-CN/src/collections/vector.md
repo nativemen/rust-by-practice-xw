@@ -18,7 +18,7 @@ fn main() {
     is_vec(&v);
 
     // vec!(..) 和 vec![..] 是同样的宏，宏可以使用 []、()、{}三种形式，因此...
-    let v = vec![1, 2, 3];
+    let v = vec!(1, 2, 3);
     is_vec(&v);
 
     // ...在下面的代码中, v 是 Vec<[u8; 3]> , 而不是 Vec<u8>
@@ -170,9 +170,10 @@ fn main() {
     let vec_ref: &mut Vec<i32> = &mut v;
     (*vec_ref).push(4);
     let slice3 = &mut v[0..4];
-    slice3[3] = 5;
+    slice3[3] = 42;
 
-    assert_eq!(slice3, &[1, 2, 3, 5]);
+    assert_eq!(slice3, &[1, 2, 3, 42]);
+    assert_eq!(v, &[1, 2, 3, 42]);
 
     println!("Success!")
 }
