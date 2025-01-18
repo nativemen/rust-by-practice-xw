@@ -1,4 +1,5 @@
-# println! and format!
+# println! and format
+
 Printing is handled by a series of [`macros`][macros] defined in [`std::fmt`][fmt]
 Some of which include:
 
@@ -11,29 +12,33 @@ Some of which include:
 All parse text in the same fashion. As a plus, Rust checks format correctness at compile time.
 
 ## `format!`
+
 1.🌟
+
 ```rust,editable
 
 fn main() {
     let s1 = "hello";
     /* Fill in the blank */
-    let s = format!(__);
+    let s = format!("{}, world!", s1);
     assert_eq!(s, "hello, world!");
 }
 ```
 
 ## `print!`, `println!`
+
 2.🌟
+
 ```rust,editable
 
 fn main() {
    /* Fill in the blanks to make it print:
-   Hello world, I am 
+   Hello world, I am
    Sunface!
    */
-   __("hello world, ");
-   __("I am");
-   __("Sunface!");
+   print!("hello world, ");
+   println!("I am");
+   println!("Sunface!");
 }
 ```
 
