@@ -1,9 +1,11 @@
 # Traits
+
 A trait tells the Rust compiler about functionality a particular type has and can share with other types. We can use traits to define shared behavior in an abstract way. We can use trait bounds to specify that a generic type can be any type that has certain behavior.
 
 > Note: Traits are similar to interfaces in other languages, although with some differences.
 
 ## Examples
+
 ```rust,editable
 
 struct Sheep { naked: bool, name: String }
@@ -14,7 +16,7 @@ trait Animal {
 
     // Method signatures; these will return a string.
     fn name(&self) -> String;
-    
+
     fn noise(&self) -> String;
 
     // Traits can provide default method definitions.
@@ -58,7 +60,7 @@ impl Animal for Sheep {
             "baaaaah!".to_string()
         }
     }
-    
+
     // Default trait methods can be overridden.
     fn talk(&self) {
         // For example, we can add some quiet contemplation.
@@ -78,7 +80,9 @@ fn main() {
 ```
 
 ## Exercises
+
 1. 🌟🌟
+
 ```rust,editable
 
 // Fill in the two impl blocks to make the code work.
@@ -93,9 +97,20 @@ trait Hello {
 
 struct Student {}
 impl Hello for Student {
+    fn say_something(&self) -> String {
+        "I'm a good student".to_string()
+    }
 }
+
 struct Teacher {}
 impl Hello for Teacher {
+    fn say_hi(&self) -> String {
+        "Hi, I'm your new teacher".to_string()
+    }
+
+    fn say_something(&self) -> String {
+        "I'm not a bad teacher".to_string()
+    }
 }
 
 fn main() {
@@ -112,10 +127,12 @@ fn main() {
 ```
 
 ### Derive
+
 The compiler is capable of providing basic implementations for some traits via
 the `#[derive]` attribute. For more info, please visit [here](https://doc.rust-lang.org/book/appendix-03-derivable-traits.html).
 
 2. 🌟🌟
+
 ```rust,editable
 
 // `Centimeters`, a tuple struct that can be compared
@@ -136,6 +153,7 @@ impl Inches {
 
 // ADD some attributes to make the code work!
 // DON'T modify other code!
+#[derive(Debug, PartialEq, PartialOrd)]
 struct Seconds(i32);
 
 fn main() {
@@ -162,11 +180,12 @@ fn main() {
 }
 ```
 
-
 ### Operator
+
 In Rust, many of the operators can be overloaded via traits. That is, some operators can be used to accomplish different tasks based on their input arguments. This is possible because operators are syntactic sugar for method calls. For example, the + operator in a + b calls the add method (as in a.add(b)). This add method is part of the Add trait. Hence, the + operator can be used by any implementor of the Add trait.
 
 3. 🌟🌟
+
 ```rust,editable
 
 use std::ops;
@@ -174,7 +193,9 @@ use std::ops;
 // Implement fn multiply to make the code work.
 // As mentioned above, `+` needs `T` to implement `std::ops::Add` Trait.
 // So, what about `*`?  You can find the answer here: https://doc.rust-lang.org/core/ops/
-fn multiply
+fn multiply<T: ops::Mul<Output = T>>(x: T, y: T) -> T {
+    x * y
+}
 
 fn main() {
     assert_eq!(6, multiply(2u8, 3u8));
@@ -185,6 +206,7 @@ fn main() {
 ```
 
 4. 🌟🌟🌟
+
 ```rust,editable
 
 // Fix the errors, DON'T modify the code in `main`.
@@ -193,8 +215,10 @@ use std::ops;
 struct Foo;
 struct Bar;
 
+#[derive(Debug, PartialEq)]
 struct FooBar;
 
+#[derive(Debug, PartialEq)]
 struct BarFoo;
 
 // The `std::ops::Add` trait is used to specify the functionality of `+`.
@@ -208,10 +232,10 @@ impl ops::Add<Bar> for Foo {
     }
 }
 
-impl ops::Sub<Foo> for Bar {
+impl ops::Sub<Bar> for Foo {
     type Output = BarFoo;
 
-    fn sub(self, _rhs: Foo) -> BarFoo {
+    fn sub(self, _rhs: Bar) -> BarFoo {
         BarFoo
     }
 }
@@ -227,9 +251,11 @@ fn main() {
 ```
 
 ### Use trait as function parameters
-Instead of a concrete type for the item parameter, we specify the impl keyword and the trait name. This parameter accepts any type that implements the specified trait. 
+
+Instead of a concrete type for the item parameter, we specify the impl keyword and the trait name. This parameter accepts any type that implements the specified trait.
 
 5. 🌟🌟🌟
+
 ```rust,editable
 
 // Implement `fn summary` to make the code work.
@@ -274,23 +300,84 @@ fn main() {
         content: "Weibo seems to be worse than Tweet".to_string(),
     };
 
-    summary(post);
-    summary(weibo);
+    summary(&post);
+    summary(&weibo);
 
     println!("{:?}", post);
     println!("{:?}", weibo);
 }
 
 // Implement `fn summary` below.
+fn summary<T: Summary>(x: &T) {
+    x.summarize();
+}
+```
 
+```rust,editable
+
+// Implement `fn summary` to make the code work.
+// Fix the errors without removing any code line
+trait Summary {
+    fn summarize(&self) -> String;
+}
+
+#[derive(Debug)]
+struct Post {
+    title: String,
+    author: String,
+    content: String,
+}
+
+impl Summary for Post {
+    fn summarize(&self) -> String {
+        format!("The author of post {} is {}", self.title, self.author)
+    }
+}
+
+#[derive(Debug)]
+struct Weibo {
+    username: String,
+    content: String,
+}
+
+impl Summary for Weibo {
+    fn summarize(&self) -> String {
+        format!("{} published a weibo {}", self.username, self.content)
+    }
+}
+
+fn main() {
+    let post = Post {
+        title: "Popular Rust".to_string(),
+        author: "Sunface".to_string(),
+        content: "Rust is awesome!".to_string(),
+    };
+    let weibo = Weibo {
+        username: "sunface".to_string(),
+        content: "Weibo seems to be worse than Tweet".to_string(),
+    };
+
+    summary(&post);
+    summary(&weibo);
+
+    println!("{:?}", post);
+    println!("{:?}", weibo);
+}
+
+// Implement `fn summary` below.
+fn summary(x: &impl Summary) {
+    x.summarize();
+}
 ```
 
 ### Returning Types that Implement Traits
+
 We can also use the impl Trait syntax in the return position to return a value of some type that implements a trait.
 
 However, you can only use impl Trait if you’re returning a single type, use Trait Objects instead when you really need to return several types.
 
 6. 🌟🌟
+
 ```rust,editable
 
 struct Sheep {}
@@ -318,7 +405,45 @@ fn random_animal(random_number: f64) -> impl Animal {
     if random_number < 0.5 {
         Sheep {}
     } else {
-        Cow {}
+        Sheep {}
+    }
+}
+
+fn main() {
+    let random_number = 0.234;
+    let animal = random_animal(random_number);
+    println!("You've randomly chosen an animal, and it says {}", animal.noise());
+}
+```
+
+```rust,editable
+
+struct Sheep {}
+struct Cow {}
+
+trait Animal {
+    fn noise(&self) -> String;
+}
+
+impl Animal for Sheep {
+    fn noise(&self) -> String {
+        "baaaaah!".to_string()
+    }
+}
+
+impl Animal for Cow {
+    fn noise(&self) -> String {
+        "moooooo!".to_string()
+    }
+}
+
+// Returns some struct that implements Animal, but we don't know which one at compile time.
+// FIX the errors here, you can make a fake random, or you can use trait object.
+fn random_animal(random_number: f64) -> Box<dyn Animal> {
+    if random_number < 0.5 {
+        Box::new(Sheep {})
+    } else {
+        Box::new(Cow {})
     }
 }
 
@@ -330,22 +455,40 @@ fn main() {
 ```
 
 ### Trait bound
+
 The `impl Trait` syntax works for straightforward cases but is actually syntax sugar for a longer form, which is called a trait bound.
 
-When working with generics, the type parameters often must use traits as bounds to stipulate what functionality a type implements. 
+When working with generics, the type parameters often must use traits as bounds to stipulate what functionality a type implements.
 
 7. 🌟🌟
+
 ```rust,editable
 fn main() {
     assert_eq!(sum(1, 2), 3);
 }
 
 // Implement `fn sum` with trait bound in two ways.
-fn sum<T>(x: T, y: T) -> T {
+fn sum<T: std::ops::Add<Output = T>>(x: T, y: T) -> T {
     x + y
 }
 ```
+
+```rust,editable
+fn main() {
+    assert_eq!(sum(1, 2), 3);
+}
+
+// Implement `fn sum` with trait bound in two ways.
+fn sum<T>(x: T, y: T) -> T
+where
+    T: std::ops::Add<Output = T>,
+{
+    x + y
+}
+```
+
 8. 🌟🌟
+
 ```rust,editable
 
 // FIX the errors.
@@ -373,6 +516,7 @@ impl<T: std::fmt::Debug + PartialOrd> Pair<T> {
     }
 }
 
+#[derive(Debug, PartialEq, PartialOrd)]
 struct Unit(i32);
 
 fn main() {
@@ -386,6 +530,7 @@ fn main() {
 ```
 
 9. 🌟🌟🌟
+
 ```rust,editable
 
 // Fill in the blanks to make it work
@@ -417,23 +562,24 @@ fn example1() {
         }
     }
 
-    let mut cacher = Cacher::new(|x| x+1);
-    assert_eq!(cacher.value(10), __);
-    assert_eq!(cacher.value(15), __);
+    let mut cacher = Cacher::new(|x| x + 1);
+    assert_eq!(cacher.value(10), 11);
+    assert_eq!(cacher.value(15), 11);
 }
-
 
 fn example2() {
     // We can also use `where` to construct `T`
     struct Cacher<T>
-        where T: Fn(u32) -> u32,
+    where
+        T: Fn(u32) -> u32,
     {
         calculation: T,
         value: Option<u32>,
     }
 
     impl<T> Cacher<T>
-        where T: Fn(u32) -> u32,
+    where
+        T: Fn(u32) -> u32,
     {
         fn new(calculation: T) -> Cacher<T> {
             Cacher {
@@ -454,12 +600,10 @@ fn example2() {
         }
     }
 
-    let mut cacher = Cacher::new(|x| x+1);
-    assert_eq!(cacher.value(20), __);
-    assert_eq!(cacher.value(25), __);
+    let mut cacher = Cacher::new(|x| x + 1);
+    assert_eq!(cacher.value(20), 21);
+    assert_eq!(cacher.value(25), 21);
 }
-
-
 
 fn main() {
     example1();
