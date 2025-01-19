@@ -1,7 +1,9 @@
 # Iterator
+
 The iterator pattern allows us to perform some tasks on a sequence of items in turn. An iterator is responsible for the logic of iterating over each item and determining when the sequence has finished.
 
 ## for and iterator
+
 ```rust
 fn main() {
     let v = vec![1, 2, 3];
@@ -11,9 +13,10 @@ fn main() {
 }
 ```
 
-In the code above, You may consider `for` as a simple loop, but actually it is iterating over a iterator. 
+In the code above, You may consider `for` as a simple loop, but actually it is iterating over a iterator.
 
 By default  `for` will apply the `into_iter` to the collection, and change it into a iterator. As a result, the following code is equivalent to previous one:
+
 ```rust
 fn main() {
     let v = vec![1, 2, 3];
@@ -23,26 +26,26 @@ fn main() {
 }
 ```
 
-
 1. 🌟
 
 ```rust,editable
 /* Refactoring the following code using iterators */
 fn main() {
     let arr = [0; 10];
-    for i in 0..arr.len() {
-        println!("{}",arr[i]);
+    for val in arr {
+        println!("{}", val);
     }
 }
 ```
 
 2. 🌟 One of the easiest ways to create an iterator is to use the range notion: `a..b`.
+
 ```rust,editable
 /* Fill in the blank */
 fn main() {
     let mut v = Vec::new();
-    for n in __ {
-       v.push(n);
+    for n in 0..100 {
+        v.push(n);
     }
 
     assert_eq!(v.len(), 100);
@@ -50,7 +53,9 @@ fn main() {
 ```
 
 ## next method
+
 All iterators implement a trait named `Iterator` that is defined in the standard library:
+
 ```rust
 pub trait Iterator {
     type Item;
@@ -63,7 +68,6 @@ pub trait Iterator {
 
 And we can call the `next` method on iterators directly.
 
-
 3. 🌟🌟
 
 ```rust,editable
@@ -71,14 +75,42 @@ And we can call the `next` method on iterators directly.
 Using two ways if possible */
 fn main() {
     let v1 = vec![1, 2];
+    let mut iter = v1.into_iter();
 
-    assert_eq!(v1.next(), __);
-    assert_eq!(v1.next(), __);
-    assert_eq!(v1.next(), __);
+    assert_eq!(iter.next(), Some(1));
+    assert_eq!(iter.next(), Some(2));
+    assert_eq!(iter.next(), None);
+}
+```
+
+```rust,editable
+/* Fill the blanks and fix the errors.
+Using two ways if possible */
+fn main() {
+    let v1 = vec![1, 2];
+    let mut iter = v1.iter();
+
+    assert_eq!(iter.next(), Some(&1));
+    assert_eq!(iter.next(), Some(&2));
+    assert_eq!(iter.next(), None);
+}
+```
+
+```rust,editable
+/* Fill the blanks and fix the errors.
+Using two ways if possible */
+fn main() {
+    let mut v1 = vec![1, 2];
+    let mut iter = v1.iter_mut();
+
+    assert_eq!(iter.next(), Some(&mut 1));
+    assert_eq!(iter.next(), Some(&mut 2));
+    assert_eq!(iter.next(), None);
 }
 ```
 
 ## into_iter, iter and iter_mut
+
 In the previous section, we have mentioned that `for` will apply the `into_iter` to the collection, and change it into a iterator. However, this is not the only way to convert collections into iterators.
 
 `into_iter`, `iter`, `iter_mut`, all of them can convert a collection into iterator, but in different ways.
@@ -87,21 +119,43 @@ In the previous section, we have mentioned that `for` will apply the `into_iter`
 - `iter`, this borrows each element of the collection through each iteration, thus leaving the collection untouched and available for reuse after the loop
 - `iter_mut`, this mutably borrows each element of the collection, allowing for the collection to be modified in place.
 
-
 4. 🌟
 
 ```rust,editable
 /* Make it work */
 fn main() {
     let arr = vec![0; 10];
-    for i in arr {
+    for i in &arr {
         println!("{}", i);
     }
 
-    println!("{:?}",arr);
+    println!("{:?}", arr);
 }
 ```
 
+```rust,editable
+/* Make it work */
+fn main() {
+    let arr = vec![0; 10];
+    for i in arr.iter() {
+        println!("{}", i);
+    }
+
+    println!("{:?}", arr);
+}
+```
+
+```rust,editable
+/* Make it work */
+fn main() {
+    let mut arr = vec![0; 10];
+    for i in arr.iter_mut() {
+        println!("{}", i);
+    }
+
+    println!("{:?}", arr);
+}
+```
 
 5. 🌟
 
@@ -110,7 +164,7 @@ fn main() {
 fn main() {
     let mut names = vec!["Bob", "Frank", "Ferris"];
 
-    for name in names.__{
+    for name in names.iter_mut() {
         *name = match name {
             &mut "Ferris" => "There is a rustacean among us!",
             _ => "Hello",
@@ -121,28 +175,28 @@ fn main() {
 }
 ```
 
-
 6. 🌟🌟
 
 ```rust,editable
 /* Fill in the blank */
 fn main() {
     let mut values = vec![1, 2, 3];
-    let mut values_iter = values.__;
+    let mut values_iter = values.iter_mut();
 
-    if let Some(v) = values_iter.__{
-        __
+    if let Some(v) = values_iter.next() {
+        *v = 0;
     }
 
     assert_eq!(values, vec![0, 2, 3]);
 }
 ```
 
-
 ## Creating our own iterator
+
 We can not only create iterators from collection's types, but also can create iterators by implementing the `Iterator` trait on our own types.
 
 **Example**
+
 ```rust
 struct Counter {
     count: u32,
@@ -179,7 +233,6 @@ fn main() {
 }
 ```
 
-
 7. 🌟🌟🌟
 
 ```rust,editable
@@ -193,9 +246,14 @@ struct Fibonacci {
 impl Iterator for Fibonacci {
     // We can refer to this type using Self::Item
     type Item = u32;
-    
+
     /* Implement next method */
-    fn next(&mut self)
+    fn next(&mut self) -> Option<Self::Item> {
+        let temp = self.next;
+        self.next += self.curr;
+        self.curr = temp;
+        Some(temp)
+    }
 }
 
 // Returns a Fibonacci sequence generator
@@ -214,12 +272,12 @@ fn main() {
 ```
 
 ## Methods that Consume the Iterator
+
 The `Iterator` trait has a number of methods with default implementations provided by the standard library.
 
-
 ### Consuming adaptors
-Some of these methods call the method `next`to use up the iterator, so they are called *consuming adaptors*.
 
+Some of these methods call the method `next`to use up the iterator, so they are called *consuming adaptors*.
 
 8. 🌟🌟
 
@@ -232,18 +290,17 @@ fn main() {
     let v1_iter = v1.iter();
 
     // The sum method will take the ownership of the iterator and iterates through the items by repeatedly calling next method
-    let total = v1_iter.sum();
+    let total: i32 = v1_iter.sum();
 
-    assert_eq!(total, __);
+    assert_eq!(total, 6);
 
-    println!("{:?}, {:?}",v1, v1_iter);
+    println!("{:?}", v1);
 }
 ```
 
-
 #### Collect
-Other than converting a collection into an iterator, we can also `collect` the result values into a collection, `collect` will consume the iterator.
 
+Other than converting a collection into an iterator, we can also `collect` the result values into a collection, `collect` will consume the iterator.
 
 9. 🌟🌟
 
@@ -251,25 +308,24 @@ Other than converting a collection into an iterator, we can also `collect` the r
 /* Make it work */
 use std::collections::HashMap;
 fn main() {
-    let names = [("sunface",18), ("sunfei",18)];
+    let names = [("sunface", 18), ("sunfei", 18)];
     let folks: HashMap<_, _> = names.into_iter().collect();
 
-    println!("{:?}",folks);
+    println!("{:?}", folks);
 
     let v1: Vec<i32> = vec![1, 2, 3];
 
-    let v2 = v1.iter().collect();
+    let v2: Vec<_> = v1.into_iter().collect();
 
     assert_eq!(v2, vec![1, 2, 3]);
 }
 ```
 
+### Iterator adaptors
 
-###  Iterator adaptors
 Methods allowing you to change one iterator into another iterator are known as *iterator adaptors*. You can chain multiple iterator adaptors to perform complex actions in a readable way.
 
 But because **all iterators are lazy**, you have to call one of the consuming adapters to get results from calls to iterator adapters.
-
 
 10. 🌟🌟
 
@@ -278,12 +334,11 @@ But because **all iterators are lazy**, you have to call one of the consuming ad
 fn main() {
     let v1: Vec<i32> = vec![1, 2, 3];
 
-    let v2: Vec<_> = v1.iter().__.__;
+    let v2: Vec<_> = v1.iter().map(|x| x + 1).collect();
 
     assert_eq!(v2, vec![2, 3, 4]);
 }
 ```
-
 
 11. 🌟🌟
 
@@ -293,17 +348,15 @@ use std::collections::HashMap;
 fn main() {
     let names = ["sunface", "sunfei"];
     let ages = [18, 18];
-    let folks: HashMap<_, _> = names.into_iter().__.collect();
+    let folks: HashMap<_, _> = names.into_iter().zip(ages.into_iter()).collect();
 
-    println!("{:?}",folks);
+    println!("{:?}", folks);
 }
 ```
 
-
 #### Using closures in iterator adaptors
 
-
-12. 🌟🌟 
+12. 🌟🌟
 
 ```rust,editable
 /* Fill in the blanks */
@@ -314,7 +367,10 @@ struct Shoe {
 }
 
 fn shoes_in_size(shoes: Vec<Shoe>, shoe_size: u32) -> Vec<Shoe> {
-    shoes.into_iter().__.collect()
+    shoes
+        .into_iter()
+        .filter(|shoe| shoe.size == shoe_size)
+        .collect()
 }
 
 fn main() {
