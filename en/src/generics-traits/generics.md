@@ -1,7 +1,9 @@
 # Generics
 
 ### Functions
+
 1. 🌟🌟🌟
+
 ```rust,editable
 
 // Fill in the blanks to make it work
@@ -19,25 +21,28 @@ fn generic<T>(_s: SGen<T>) {}
 
 fn main() {
     // Using the non-generic functions
-    reg_fn(__);          // Concrete type.
-    gen_spec_t(__);   // Implicitly specified type parameter `A`.
-    gen_spec_i32(__); // Implicitly specified type parameter `i32`.
+    reg_fn(S(A));          // 具体的类型
+    gen_spec_t(SGen(A));   // 隐式地指定类型参数  `A`.
+    gen_spec_i32(SGen(-1)); // 隐式地指定类型参数`i32`.
 
     // Explicitly specified type parameter `char` to `generic()`.
-    generic::<char>(__);
+    generic::<char>(SGen('a'));
 
     // Implicitly specified type parameter `char` to `generic()`.
-    generic(__);
+    generic(SGen('b'));
 
     println!("Success!");
 }
 ```
 
 2. 🌟🌟 A function call with explicitly specified type parameters looks like: `fun::<A, B, ...>()`.
+
 ```rust,editable
 
 // Implement the generic function below.
-fn sum
+fn sum<T: std::ops::Add<Output = T>>(x: T, y: T) -> T {
+    x + y
+}
 
 fn main() {
     assert_eq!(5, sum(2i8, 3i8));
@@ -48,14 +53,17 @@ fn main() {
 }
 ```
 
-
 ### Struct and `impl`
 
 3. 🌟
+
 ```rust,editable
 
 // Implement struct Point to make it work.
-
+struct Point<T> {
+    x: T,
+    y: T,
+}
 
 fn main() {
     let integer = Point { x: 5, y: 10 };
@@ -66,12 +74,13 @@ fn main() {
 ```
 
 4. 🌟🌟
+
 ```rust,editable
 
 // Modify this struct to make the code work
-struct Point<T> {
+struct Point<T, U> {
     x: T,
-    y: T,
+    y: U,
 }
 
 fn main() {
@@ -83,29 +92,32 @@ fn main() {
 ```
 
 5. 🌟🌟
+
 ```rust,editable
 
 // Add generic for Val to make the code work, DON'T modify the code in `main`.
-struct Val {
-    val: f64,
+struct Val<T> {
+    val: T,
 }
 
-impl Val {
-    fn value(&self) -> &f64 {
+impl<T> Val<T> {
+    fn value(&self) -> &T {
         &self.val
     }
 }
 
-
 fn main() {
-    let x = Val{ val: 3.0 };
-    let y = Val{ val: "hello".to_string()};
+    let x = Val { val: 3.0 };
+    let y = Val {
+        val: "hello".to_string(),
+    };
     println!("{}, {}", x.value(), y.value());
 }
 ```
 
 ### Method
-6. 🌟🌟🌟 
+
+6. 🌟🌟🌟
 
 ```rust,editable
 struct Point<T, U> {
@@ -115,12 +127,20 @@ struct Point<T, U> {
 
 impl<T, U> Point<T, U> {
     // Implement mixup to make it work, DON'T modify other code.
-    fn mixup
+    fn mixup<V, W>(self, another: Point<V, W>) -> Point<T, W> {
+        Point {
+            x: self.x,
+            y: another.y,
+        }
+    }
 }
 
 fn main() {
     let p1 = Point { x: 5, y: 10 };
-    let p2 = Point { x: "Hello", y: '中'};
+    let p2 = Point {
+        x: "Hello",
+        y: '中',
+    };
 
     let p3 = p1.mixup(p2);
 
@@ -132,6 +152,7 @@ fn main() {
 ```
 
 7. 🌟🌟
+
 ```rust,editable
 
 // Fix the errors to make the code work.
@@ -147,10 +168,12 @@ impl Point<f32> {
 }
 
 fn main() {
-    let p = Point{x: 5, y: 10};
+    let p = Point {
+        x: 5.0f32,
+        y: 10.0f32,
+    };
     println!("{}",p.distance_from_origin());
 }
 ```
 
 > You can find the solutions [here](https://github.com/sunface/rust-by-practice/blob/master/solutions/generics-traits/generics.md)(under the solutions path), but only use it when you need it
-
