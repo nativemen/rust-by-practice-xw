@@ -1,5 +1,7 @@
 # Closure
+
 Closures can capture the enclosing environments. For example we can capture the `x` variable :
+
 ```rust
 fn main() {
     let x = 1;
@@ -16,7 +18,7 @@ fn main() {
     fn function(i: i32) -> i32 { i + 1 }
 
     // Closures are anonymous, here we are binding them to references
-    // 
+    //
     // These nameless functions are assigned to appropriately named variables.
     let closure_annotated = |i: i32| -> i32 { i + 1 };
     let closure_inferred  = |i     |          i + 1  ;
@@ -36,11 +38,12 @@ fn main() {
 ```
 
 ## Capturing
+
 Closures can capture variables by borrowing or moving. But they prefer to capture by borrowing and only go lower when required:
+
 - By reference: `&T`
 - By mutable reference: `&mut T`
 - By value: `T`
-
 
 1. 🌟
 
@@ -49,50 +52,47 @@ Closures can capture variables by borrowing or moving. But they prefer to captur
 fn main() {
     let color = String::from("green");
 
-    let print = move || println!("`color`: {}", color);
+    let print = || println!("`color`: {}", color);
 
     print();
     print();
 
     // `color` can be borrowed immutably again, because the closure only holds
-    // an immutable reference to `color`. 
+    // an immutable reference to `color`.
     let _reborrow = &color;
 
-    println!("{}",color);
+    println!("{}", color);
 }
 ```
-
 
 2. 🌟🌟
 
 ```rust,editable
-/* Make it work 
+/* Make it work
 - Dont use `_reborrow` and `_count_reborrowed`
 - Dont modify `assert_eq`
 */
 fn main() {
     let mut count = 0;
 
-    let mut inc = || {
+    let mut inc = move || {
         count += 1;
         println!("`count`: {}", count);
     };
 
     inc();
 
-
-    let _reborrow = &count; 
+    let _reborrow = &count;
 
     inc();
 
     // The closure no longer needs to borrow `&mut count`. Therefore, it is
     // possible to reborrow without an error
-    let _count_reborrowed = &mut count; 
+    let _count_reborrowed = &mut count;
 
     assert_eq!(count, 0);
 }
 ```
-
 
 3. 🌟🌟
 
@@ -100,21 +100,58 @@ fn main() {
 /* Make it work in two ways, none of them is to remove `take(movable)` away from the code
 */
 fn main() {
-     let movable = Box::new(3);
+    let movable = 3;
 
-     let consume = || {
-         println!("`movable`: {:?}", movable);
-         take(movable);
-     };
+    let consume = move || {
+        println!("`movable`: {:?}", movable);
+        take(movable);
+    };
 
-     consume();
-     consume();
+    consume();
+    consume();
 }
 
 fn take<T>(_v: T) {}
 ```
 
-For comparison, the following code has no error: 
+```rust,editable
+/* Make it work in two ways, none of them is to remove `take(movable)` away from the code
+*/
+fn main() {
+    let movable = Box::new(3);
+
+    let consume = move || {
+        println!("`movable`: {:?}", movable);
+        take(movable);
+    };
+
+    consume();
+    // consume();
+}
+
+fn take<T>(_v: T) {}
+```
+
+```rust,editable
+/* Make it work in two ways, none of them is to remove `take(movable)` away from the code
+*/
+fn main() {
+    let movable = Box::new(3);
+
+    let consume = move || {
+        println!("`movable`: {:?}", movable);
+        take(&movable);
+    };
+
+    consume();
+    consume();
+}
+
+fn take<T>(_v: &T) {}
+```
+
+For comparison, the following code has no error:
+
 ```rust
 fn main() {
      let movable = Box::new(3);
@@ -129,6 +166,7 @@ fn main() {
 ```
 
 ## Type inferred
+
 The following four closures has no difference in input and return  types.
 
 ```rust
@@ -137,7 +175,6 @@ let add_one_v2 = |x: u32| -> u32 { x + 1 };
 let add_one_v3 = |x|             { x + 1 };
 let add_one_v4 = |x|               x + 1  ;
 ```
-
 
 4. 🌟
 
@@ -148,17 +185,39 @@ fn main() {
     let s = example_closure(String::from("hello"));
 
     /* Make it work, only change the following line */
-    let n = example_closure(5);
+    let n = example_closure(5.to_string());
+}
+```
+
+```rust,editable
+fn main() {
+    let example_closure = |x| x;
+
+    let s = example_closure(String::from("hello"));
+
+    /* Make it work, only change the following line */
+    let n = example_closure(format!("{}", 5));
+}
+```
+
+```rust,editable
+fn main() {
+    let example_closure = |x| x;
+
+    let s = example_closure(String::from("hello"));
+
+    /* Make it work, only change the following line */
+    let n = example_closure(String::from("5"));
 }
 ```
 
 ## Fn, FnMut, FnOnce
+
 When taking a closure as an input parameter, the closure's complete type must be annotated using one of the following traits:
 
 - Fn: the closure uses the captured value by reference (&T)
 - FnMut: the closure uses the captured value by mutable reference (&mut T)
 - FnOnce: the closure uses the captured value by value (T)
-
 
 5. 🌟🌟
 
@@ -166,7 +225,7 @@ When taking a closure as an input parameter, the closure's complete type must be
 /* Make it work by changing the trait bound, in two ways*/
 fn fn_once<F>(func: F)
 where
-    F: FnOnce(usize) -> bool,
+    F: Fn(usize) -> bool,
 {
     println!("{}", func(3));
     println!("{}", func(4));
@@ -174,11 +233,28 @@ where
 
 fn main() {
     let x = vec![1, 2, 3];
-    fn_once(|z|{z == x.len()})
+    fn_once(|z| z == x.len())
+}
+```
+
+```rust,editable
+/* Make it work by changing the trait bound, in two ways*/
+fn fn_once<F>(func: F)
+where
+    F: Fn(usize) -> bool,
+{
+    println!("{}", func(3));
+    println!("{}", func(4));
+}
+
+fn main() {
+    let x = vec![1, 2, 3];
+    fn_once(|z| z == x.len())
 }
 ```
 
 6. 🌟🌟
+
 ```rust,editable
 fn main() {
     let mut s = String::new();
@@ -187,16 +263,17 @@ fn main() {
 
     exec(update_string);
 
-    println!("{:?}",s);
+    println!("{:?}", s);
 }
 
 /* Fill in the blank */
-fn exec<'a, F: __>(mut f: F)  {
+fn exec<'a, F: FnMut(&'a str)>(mut f: F) {
     f("hello")
 }
 ```
- 
+
 #### Which trait does the compiler prefer to use?
+
 - Fn: the closure uses the captured value by reference (&T)
 - FnMut: the closure uses the captured value by mutable reference (&mut T)
 - FnOnce: the closure uses the captured value by value (T)
@@ -204,10 +281,9 @@ fn exec<'a, F: __>(mut f: F)  {
 On a variable-by-variable basis, the compiler will capture variables in the least restrictive manner possible.
 
 For instance, consider a parameter annotated as FnOnce. This specifies that the closure may capture by `&T`, `&mut T`, or `T`, but the compiler will ultimately choose based on how the captured variables are used in the closure.
-Which trait to use is determined by what the closure does with captured value. 
+Which trait to use is determined by what the closure does with captured value.
 
 This is because if a move is possible, then any type of borrow should also be possible. Note that the reverse is not true. If the parameter is annotated as `Fn`, then capturing variables by `&mut T` or `T` are not allowed.
-
 
 7. 🌟🌟
 
@@ -216,18 +292,20 @@ This is because if a move is possible, then any type of borrow should also be po
 
 // A function which takes a closure as an argument and calls it.
 // <F> denotes that F is a "Generic type parameter"
-fn apply<F>(f: F) where
+fn apply<F>(f: F)
+where
     // The closure takes no input and returns nothing.
-    F: __ {
-
+    F: FnOnce(),
+{
     f();
 }
 
 // A function which takes a closure and returns an `i32`.
-fn apply_to_3<F>(f: F) -> i32 where
+fn apply_to_3<F>(f: F) -> i32
+where
     // The closure takes an `i32` and returns an `i32`.
-    F: Fn(i32) -> i32 {
-
+    F: Fn(i32) -> i32,
+{
     f(3)
 }
 
@@ -272,31 +350,31 @@ Move closures may still implement `Fn` or `FnMut`, even though they capture vari
 fn main() {
     let s = String::new();
 
-    let update_string = move || println!("{}",s);
+    let update_string = move || println!("{}", s);
 
     exec(update_string);
 }
 
-fn exec<F: FnOnce()>(f: F)  {
+fn exec<F: FnOnce()>(f: F) {
     f()
 }
 ```
 
 The following code also has no error:
+
 ```rust
 fn main() {
     let s = String::new();
 
-    let update_string = move || println!("{}",s);
+    let update_string = move || println!("{}", s);
 
     exec(update_string);
 }
 
-fn exec<F: Fn()>(f: F)  {
+fn exec<F: Fn()>(f: F) {
     f()
 }
 ```
-
 
 8. 🌟🌟
 
@@ -305,27 +383,51 @@ fn exec<F: Fn()>(f: F)  {
 fn main() {
     let mut s = String::new();
 
-    let update_string = |str| -> String {s.push_str(str); s };
+    let update_string = |str| -> String {
+        s.push_str(str);
+        s
+    };
 
     exec(update_string);
 }
 
-fn exec<'a, F: __>(mut f: F) {
+fn exec<'a, F: FnOnce(&'a str) -> String>(mut f: F) {
     f("hello");
 }
 ```
 
-
 ## Input functions
-Since closure can be used as arguments, you might wonder can we use functions as arguments too? And indeed we can.
 
+Since closure can be used as arguments, you might wonder can we use functions as arguments too? And indeed we can.
 
 9. 🌟🌟
 
 ```rust,editable
 
 /* Implement `call_me` to make it work */
-fn call_me {
+fn call_me<F>(f: F)
+where
+    F: Fn(),
+{
+    f();
+}
+
+fn function() {
+    println!("I'm a function!");
+}
+
+fn main() {
+    let closure = || println!("I'm a closure!");
+
+    call_me(closure);
+    call_me(function);
+}
+```
+
+```rust,editable
+
+/* Implement `call_me` to make it work */
+fn call_me<F: Fn()>(f: F) {
     f();
 }
 
@@ -342,22 +444,21 @@ fn main() {
 ```
 
 ## Closure as return types
-Returning a closure is much harder than you may have thought of.
 
+Returning a closure is much harder than you may have thought of.
 
 10. 🌟🌟
 
 ```rust,editable
 /* Fill in the blank using two approaches,
  and fix the error */
-fn create_fn() -> __ {
+fn create_fn() -> impl Fn(i32) -> i32 {
     let num = 5;
 
     // How does the following closure capture the environment variable `num`
     // &T, &mut T, T ?
-    |x| x + num
+    move |x| x + num
 }
-
 
 fn main() {
     let fn_plain = create_fn();
@@ -365,47 +466,76 @@ fn main() {
 }
 ```
 
+```rust,editable
+/* Fill in the blank using two approaches,
+ and fix the error */
+fn create_fn() -> impl FnOnce(i32) -> i32 {
+    let num = 5;
+
+    // How does the following closure capture the environment variable `num`
+    // &T, &mut T, T ?
+    move |x| x + num
+}
+
+fn main() {
+    let fn_plain = create_fn();
+    fn_plain(1);
+}
+```
+
+```rust,editable
+/* Fill in the blank using two approaches,
+ and fix the error */
+fn create_fn() -> Box<dyn FnOnce(i32) -> i32> {
+    let num = 5;
+
+    // How does the following closure capture the environment variable `num`
+    // &T, &mut T, T ?
+    Box::new(move |x| x + num)
+}
+
+fn main() {
+    let fn_plain = create_fn();
+    fn_plain(1);
+}
+```
 
 11. 🌟🌟
 
 ```rust,editable
 /* Fill in the blank and fix the error*/
-fn factory(x:i32) -> __ {
-
+fn factory(x: i32) -> Box<dyn Fn(i32) -> i32> {
     let num = 5;
 
-    if x > 1{
-        move |x| x + num
+    if x > 1 {
+        Box::new(move |x| x + num)
     } else {
-        move |x| x + num
+        Box::new(move |x| x + num)
     }
 }
 ```
 
-
 ## Closure in structs
 
 **Example**
+
 ```rust
-struct Cacher<T,E>
+struct Cacher<T, E>
 where
     T: Fn(E) -> E,
-    E: Copy
+    E: Copy,
 {
     query: T,
     value: Option<E>,
 }
 
-impl<T,E> Cacher<T,E>
+impl<T, E> Cacher<T, E>
 where
     T: Fn(E) -> E,
-    E: Copy
+    E: Copy,
 {
-    fn new(query: T) -> Cacher<T,E> {
-        Cacher {
-            query,
-            value: None,
-        }
+    fn new(query: T) -> Cacher<T, E> {
+        Cacher { query, value: None }
     }
 
     fn value(&mut self, arg: E) -> E {
@@ -419,9 +549,7 @@ where
         }
     }
 }
-fn main() {
-  
-}
+fn main() {}
 
 #[test]
 fn call_with_different_values() {
@@ -433,4 +561,5 @@ fn call_with_different_values() {
     assert_eq!(v2, 1);
 }
 ```
+
 > You can find the solutions [here](https://github.com/sunface/rust-by-practice/blob/master/solutions/functional-programing/closure.md)(under the solutions path), but only use it when you need it :)
