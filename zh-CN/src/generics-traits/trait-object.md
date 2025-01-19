@@ -43,7 +43,7 @@ impl Bird for Swan {
 
 fn main() {
     // 填空
-    let duck = Duck;
+    let duck = Duck {};
     duck.swim();
 
     let bird = hatch_a_bird(2);
@@ -346,8 +346,8 @@ fn my_function(x: impl MyTrait) -> Box<dyn MyTrait> {
 }
 
 fn main() {
-    let result1 = my_function(13_u32);
-    let result2 = my_function(String::from("abc"));
+    my_function(13_u32);
+    my_function(String::from("abc"));
 
     println!("Success!");
 }
