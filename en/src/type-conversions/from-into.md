@@ -1,7 +1,8 @@
 # From/Into
+
 The `From` trait allows for a type to define how to create itself from another type, hence providing a very simple mechanism for converting between several types.
 
-The `From` and `Into` traits are inherently linked, and this is actually part of its implementation. It means if we write something like this: `impl From<T> for U`, then we can use 
+The `From` and `Into` traits are inherently linked, and this is actually part of its implementation. It means if we write something like this: `impl From<T> for U`, then we can use
 `let u: U = U::from(T)` or `let u:U = T.into()`.
 
 The `Into` trait is simply the reciprocal of the `From` trait. That is, if you have implemented the `From` trait for your type, then the `Into` trait will be automatically implemented for the same type.
@@ -9,6 +10,7 @@ The `Into` trait is simply the reciprocal of the `From` trait. That is, if you h
 Using the `Into` trait will typically require the type annotations as the compiler is unable to determine this most of the time.
 
 For example, we can easily convert `&str` into `String` :
+
 ```rust
 fn main() {
     let my_str = "hello";
@@ -26,6 +28,7 @@ Because the standard library has already implemented this for us : `impl From<&'
 Some implementations of `From` trait can be found [here](https://doc.rust-lang.org/stable/std/convert/trait.From.html#implementors).
 
 1. 🌟🌟🌟
+
 ```rust,editable
 fn main() {
     // impl From<bool> for i32
@@ -38,17 +41,40 @@ fn main() {
     /* 1. use a similar type which `impl From<char>`, maybe you
     should check the docs mentioned above to find the answer */
     // 2. a keyword from the last chapter
-    let i3: i32 = 'a'.into();
+    let i3: u32 = 'a'.into();
 
     // FIX the error in two ways
-    let s: String = 'a' as String;
+    let s: String = 'a'.into();
+
+    println!("Success!");
+}
+```
+
+```rust,editable
+fn main() {
+    // impl From<bool> for i32
+    let i1: i32 = false.into();
+    let i2: i32 = i32::from(false);
+    assert_eq!(i1, i2);
+    assert_eq!(i1, 0);
+
+    // FIX the error in two ways
+    /* 1. use a similar type which `impl From<char>`, maybe you
+    should check the docs mentioned above to find the answer */
+    // 2. a keyword from the last chapter
+    let i3: i32 = 'a' as i32;
+
+    // FIX the error in two ways
+    let s: String = String::from('a');
 
     println!("Success!");
 }
 ```
 
 ### Implement `From` for custom types
+
 2. 🌟🌟
+
 ```rust,editable
 // From is now included in `std::prelude`, so there is no need to introduce it into the current scope
 // use std::convert::From;
@@ -60,14 +86,17 @@ struct Number {
 
 impl From<i32> for Number {
     // IMPLEMENT `from` method
+    fn from(value: i32) -> Self {
+        Number { value }
+    }
 }
 
 // FILL in the blanks
 fn main() {
-    let num = __(30);
+    let num = Number::from(30);
     assert_eq!(num.value, 30);
 
-    let num: Number = __;
+    let num: Number = 30.into();
     assert_eq!(num.value, 30);
 
     println!("Success!");
@@ -75,6 +104,7 @@ fn main() {
 ```
 
 3. 🌟🌟🌟 When performing error handling it is often useful to implement `From` trait for our own error type. Then we can use `?` to automatically convert the underlying error type to our own error type.
+
 ```rust,editable
 use std::fs;
 use std::io;
@@ -87,10 +117,16 @@ enum CliError {
 
 impl From<io::Error> for CliError {
     // IMPLEMENT from method
+    fn from(value: io::Error) -> Self {
+        CliError::IoError(value)
+    }
 }
 
 impl From<num::ParseIntError> for CliError {
     // IMPLEMENT from method
+    fn from(value: num::ParseIntError) -> Self {
+        CliError::ParseError(value)
+    }
 }
 
 fn open_and_parse_file(file_name: &str) -> Result<i32, CliError> {
@@ -106,13 +142,14 @@ fn main() {
 }
 ```
 
-
 ### TryFrom/TryInto
+
 Similar to `From` and `Into`, `TryFrom` and `TryInto` are generic traits for converting between types.
 
-Unlike `From/Into`, `TryFrom` and `TryInto` are used for fallible conversions and return a `Result` instead of a plain value. 
+Unlike `From/Into`, `TryFrom` and `TryInto` are used for fallible conversions and return a `Result` instead of a plain value.
 
 4. 🌟🌟
+
 ```rust,editable
 // TryFrom and TryInto are included in `std::prelude`, so there is no need to introduce it into the current scope
 // use std::convert::TryInto;
@@ -122,21 +159,25 @@ fn main() {
 
     // Into trait has a method `into`,
     // hence TryInto has a method ?
-    let n: u8 = match n.__() {
+    let n: u8 = match n.try_into() {
         Ok(n) => n,
         Err(e) => {
-            println!("there is an error when converting: {:?}, but we catch it", e.to_string());
+            println!(
+                "there is an error when converting: {:?}, but we catch it",
+                e.to_string()
+            );
             0
         }
     };
 
-    assert_eq!(n, __);
+    assert_eq!(n, 0);
 
     println!("Success!");
 }
 ```
 
 5. 🌟🌟🌟
+
 ```rust,editable
 #[derive(Debug, PartialEq)]
 struct EvenNum(i32);
@@ -160,9 +201,9 @@ fn main() {
 
     // FILL in the blanks
     let result: Result<EvenNum, ()> = 8i32.try_into();
-    assert_eq!(result, __);
+    assert_eq!(result, Ok(EvenNum(8)));
     let result: Result<EvenNum, ()> = 5i32.try_into();
-    assert_eq!(result, __);
+    assert_eq!(result, Err(()));
 
     println!("Success!");
 }
