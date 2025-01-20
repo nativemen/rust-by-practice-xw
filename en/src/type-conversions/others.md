@@ -1,9 +1,11 @@
 # Others
 
 ### Convert any type to String
+
 To convert any type to `String`, you can simply use the `ToString` trait for that type. Rather than doing that directly, you should implement the `fmt::Display` trait which will automatically provides `ToString` and also allows you to print the type with `println!`.
 
 1. 🌟🌟
+
 ```rust,editable
 use std::fmt;
 
@@ -14,75 +16,125 @@ struct Point {
 
 impl fmt::Display for Point {
     // IMPLEMENT fmt method
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "The point is ({}, {})", self.x, self.y)
+    }
 }
 
 fn main() {
     let origin = Point { x: 0, y: 0 };
     // FILL in the blanks
-    assert_eq!(origin.__, "The point is (0, 0)");
-    assert_eq!(format!(__), "The point is (0, 0)");
+    assert_eq!(origin.to_string(), "The point is (0, 0)");
+    assert_eq!(format!("{}", origin), "The point is (0, 0)");
 
     println!("Success!");
 }
 ```
 
 ### Parse a String
+
 2. 🌟🌟🌟 We can use `parse` method to convert a `String` into a `i32` number, this is because `FromStr` is implemented for `i32` type in standard library: `impl FromStr for i32`
+
 ```rust,editable
 // To use `from_str` method, you need to introduce this trait into the current scope.
 use std::str::FromStr;
 fn main() {
-    let parsed: i32 = "5".__.unwrap();
-    let turbo_parsed = "10".__.unwrap();
-    let from_str = __.unwrap();
+    let parsed: i32 = "5".parse().unwrap();
+    let turbo_parsed = "10".parse::<i32>().unwrap();
+    let from_str = i32::from_str("20").unwrap();
     let sum = parsed + turbo_parsed + from_str;
     assert_eq!(sum, 35);
 
     println!("Success!");
 }
-``` 
-
+```
 
 3. 🌟🌟 We can also implement the `FromStr` trait for our custom types
+
 ```rust,editable
-use std::str::FromStr;
 use std::num::ParseIntError;
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
 struct Point {
     x: i32,
-    y: i32
+    y: i32,
 }
 
 impl FromStr for Point {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let coords: Vec<&str> = s.trim_matches(|p| p == '(' || p == ')' )
-                                 .split(',')
-                                 .map(|x| x.trim())
-                                 .collect();
+        let coords: Vec<&str> = s
+            .trim_matches(|p| p == '(' || p == ')')
+            .split(',')
+            .map(|x| x.trim())
+            .collect();
 
         let x_fromstr = coords[0].parse::<i32>()?;
         let y_fromstr = coords[1].parse::<i32>()?;
 
-        Ok(Point { x: x_fromstr, y: y_fromstr })
+        Ok(Point {
+            x: x_fromstr,
+            y: y_fromstr,
+        })
     }
 }
 fn main() {
     // FILL in the blanks in two ways
-    // DON'T change code anywhere else 
-    let p = __;
-    assert_eq!(p.unwrap(), Point{ x: 3, y: 4} );
+    // DON'T change code anywhere else
+    let p = "(3, 4)".parse::<Point>();
+    assert_eq!(p.unwrap(), Point { x: 3, y: 4 });
+
+    println!("Success!");
+}
+```
+
+```rust,editable
+use std::num::ParseIntError;
+use std::str::FromStr;
+
+#[derive(Debug, PartialEq)]
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+impl FromStr for Point {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let coords: Vec<&str> = s
+            .trim_matches(|p| p == '(' || p == ')')
+            .split(',')
+            .map(|x| x.trim())
+            .collect();
+
+        let x_fromstr = coords[0].parse::<i32>()?;
+        let y_fromstr = coords[1].parse::<i32>()?;
+
+        Ok(Point {
+            x: x_fromstr,
+            y: y_fromstr,
+        })
+    }
+}
+fn main() {
+    // FILL in the blanks in two ways
+    // DON'T change code anywhere else
+    let p = Point::from_str("(3, 4)");
+    assert_eq!(p.unwrap(), Point { x: 3, y: 4 });
 
     println!("Success!");
 }
 ```
 
 ### Deref
+
 You can find all the examples and exercises of the `Deref` trait [here](https://practice.rs/smart-pointers/deref.html).
 
 ### Transmute
+
 `std::mem::transmute` is a **unsafe function** can be used to reinterprets the bits of a value of one type as another type. Both of the original and the result types must have the same size and neither of them can be invalid.
 
 `transmute` is semantically equivalent to a bitwise move of one type into another. It copies the bits from the source value into the destination value, then forgets the original, seems equivalent to C's `memcpy` under the hood.
@@ -90,6 +142,7 @@ You can find all the examples and exercises of the `Deref` trait [here](https://
 So, **`transmute` is incredibly unsafe !** The caller has to ensure all the safes himself!
 
 #### Examples
+
 1. `transmute` can be used to turn a  pointer into a function pointer, this is not portable on machines where function pointer and data pointer have different sizes.
 
 ```rust,editable
@@ -107,6 +160,7 @@ fn main() {
 ```
 
 2. Extending a lifetime or shortening the lifetime of an invariant is an advanced usage of `transmute`, yeah, **very unsafe Rust!**.
+
 ```rust,editable
 struct R<'a>(&'a i32);
 unsafe fn extend_lifetime<'b>(r: R<'b>) -> R<'static> {
@@ -120,6 +174,7 @@ unsafe fn shorten_invariant_lifetime<'b, 'c>(r: &'b mut R<'static>)
 ```
 
 3. Rather than using `transmute`, you can use some alternatives instead.
+
 ```rust,editable
 fn main() {
     /*Turning raw bytes(&[u8]) to u32, f64, etc.: */
