@@ -1,16 +1,18 @@
 # newtype and Sized
 
 ## Newtype
+
 The orphan rule tells us that we are allowed to implement a trait on a type as long as either the trait or the type are local to our crate.
 
 The **newtype pattern** can help us get around this restriction, which involves creating a new type in a **tuple struct**.
 
 1. 🌟
+
 ```rust,editable
 use std::fmt;
 
 /* Define the Wrapper type */
-__;
+struct Wrapper(Vec<String>);
 
 // Display is an external trait
 impl fmt::Display for Wrapper {
@@ -27,6 +29,7 @@ fn main() {
 ```
 
 2. 🌟 Hide the methods of the original type.
+
 ```rust,editable
 /* Make it workd */
 struct Meters(u32);
@@ -36,12 +39,13 @@ fn main() {
     assert_eq!(i.pow(2), 4);
 
     let n = Meters(i);
-    // The `pow` method is defined on `u32` type, we can't directly call it 
-    assert_eq!(n.pow(2), 4);
+    // The `pow` method is defined on `u32` type, we can't directly call it
+    assert_eq!(n.0.pow(2), 4);
 }
 ```
 
 3. 🌟🌟 The `newtype` idiom gives compile time guarantees that the right type of value is supplied to a program.
+
 ```rust,editable
 /* Make it work */
 struct Years(i64);
@@ -53,7 +57,6 @@ impl Years {
         Days(self.0 * 365)
     }
 }
-
 
 impl Days {
     pub fn to_years(&self) -> Years {
@@ -70,14 +73,15 @@ fn main() {
     let age = Years(5);
     let age_days = age.to_days();
     println!("Old enough {}", old_enough(&age));
-    println!("Old enough {}", old_enough(&age_days));
+    println!("Old enough {}", old_enough(&age_days.to_years()));
 }
 ```
 
 4. 🌟🌟
+
 ```rust,editable
-use std::ops::Add;
 use std::fmt::{self, format};
+use std::ops::Add;
 
 struct Meters(u32);
 impl fmt::Display for Meters {
@@ -95,14 +99,17 @@ impl Add for Meters {
 }
 fn main() {
     let d = calculate_distance(Meters(10), Meters(20));
-    assert_eq!(format!("{}",d), "There are still 30 meters left");
+    assert_eq!(format!("{}", d), "There are still 30 meters left");
 }
 
 /* Implement calculate_distance  */
-fn calculate_distance
+fn calculate_distance(x: Meters, y: Meters) -> Meters {
+    x + y
+}
 ```
 
 ## Type alias
+
 Type alias is important to improve the readability of our code.
 
 ```rust
@@ -124,6 +131,7 @@ type Result<T> = std::result::Result<T, std::io::Error>;
 ```
 
 And Unlike newtype, type alias don't create new types, so the following code is valid:
+
 ```rust
 type Meters = u32;
 
@@ -134,6 +142,7 @@ println!("x + y = {}", x + y);
 ```
 
 5. 🌟
+
 ```rust,editable
 enum VeryVerboseEnumOfThingsToDoWithNumbers {
     Add,
@@ -141,7 +150,7 @@ enum VeryVerboseEnumOfThingsToDoWithNumbers {
 }
 
 /* Fill in the blank */
-__
+type Operations = VeryVerboseEnumOfThingsToDoWithNumbers;
 
 fn main() {
     // We can refer to each variant via its alias, not its long and inconvenient
@@ -151,6 +160,7 @@ fn main() {
 ```
 
 6. 🌟🌟 There are a few preserved aliases in Rust, one of which can be used in `impl` blocks.
+
 ```rust,editable
 enum VeryVerboseEnumOfThingsToDoWithNumbers {
     Add,
@@ -160,45 +170,56 @@ enum VeryVerboseEnumOfThingsToDoWithNumbers {
 impl VeryVerboseEnumOfThingsToDoWithNumbers {
     fn run(&self, x: i32, y: i32) -> i32 {
         match self {
-            __::Add => x + y,
-            __::Subtract => x - y,
+            Self::Add => x + y,
+            Self::Subtract => x - y,
         }
     }
 }
 ```
 
 ## DST and unsized type
+
 These concepts are complicated, so we are not going to explain here, but you can find them in [The Book](https://doc.rust-lang.org/book/ch19-04-advanced-types.html?highlight=DST#dynamically-sized-types-and-the-sized-trait).
 
 7. 🌟🌟🌟 Array with dynamic length is a Dynamic Sized Type ( DST ), we can't directly use it
+
 ```rust,editable
 /* Make it work with const generics */
-fn my_function(n: usize) -> [u32; usize] {
-    [123; n]
+fn my_function<const N: usize>() -> [u32; N] {
+    [123; N]
 }
 
 fn main() {
-    let arr = my_function();
-    println!("{:?}",arr);
+    let arr = my_function::<100>();
+    println!("{:?}", arr);
 }
 ```
 
 8. 🌟🌟 Slice is unsized type, but the reference of slice is not.
+
 ```rust,editable
 /* Make it work with slice references */
 fn main() {
-    let s: str = "Hello there!";
+    let s: &str = "Hello there!";
 
-    let arr: [u8] = [1, 2, 3];
+    let arr: &[u8] = &[1, 2, 3];
 }
 ```
 
 9. 🌟🌟 Trait is also an unsized type
+
 ```rust,editable
 /* Make it work in two ways */
 use std::fmt::Display;
-fn foobar(thing: Display) {}    
+fn foobar(thing: &dyn Display) {}
 
-fn main() {
-}
+fn main() {}
+```
+
+```rust,editable
+/* Make it work in two ways */
+use std::fmt::Display;
+fn foobar(thing: Box<dyn Display>) {}
+
+fn main() {}
 ```
