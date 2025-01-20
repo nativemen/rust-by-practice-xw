@@ -1,11 +1,12 @@
-# panic!
+# panic
+
 The simplest error handling mechanism is to use `panic`. It just prints an error message and starts unwinding the stack, finally exit the current thread:
 
 - if panic occurred in `main` thread, then the program will be exited.
 - if in spawned thread, then this thread will be terminated, but the program won't
 
-
 1. 🌟🌟
+
 ```rust,editable
 
 // FILL the blanks
@@ -13,36 +14,38 @@ fn drink(beverage: &str) {
     if beverage == "lemonade" {
         println!("Success!");
         // IMPLEMENT the below code
-        __
+        panic!("drink panic!")
      }
 
     println!("Exercise Failed if printing out this line!");
 }
 
 fn main() {
-    drink(__);
+    drink("lemonade");
 
     println!("Exercise Failed if printing out this line!");
 }
 ```
 
 ## common panic cases
+
 2. 🌟🌟
+
 ```rust,editable
 // MAKE the code work by fixing all panics
 fn main() {
-    assert_eq!("abc".as_bytes(), [96, 97, 98]);
+    assert_eq!("abc".as_bytes(), [97, 98, 99]);
 
     let v = vec![1, 2, 3];
-    let ele = v[3];
+    let ele = v[2];
     // unwrap may panic when get return a None
-    let ele = v.get(3).unwrap();
+    let ele = v.get(2).unwrap();
 
     // Sometimes, the compiler is unable to find the overflow errors for you in compile time ,so a panic will occur
     let v = production_rate_per_hour(2);
 
     // because of the same reason as above, we have to wrap it in a function to make the panic occur
-    divide(15, 0);
+    divide(15, 1);
 
     println!("Success!")
 }
@@ -52,7 +55,7 @@ fn divide(x:u8, y:u8) {
 }
 
 fn production_rate_per_hour(speed: u8) -> f64 {
-    let cph: u8 = 221;
+    let cph: u8 = 2;
     match speed {
         1..=4 => (speed * cph) as f64,
         5..=8 => (speed * cph) as f64 * 0.9,
@@ -67,7 +70,9 @@ pub fn working_items_per_minute(speed: u8) -> u32 {
 ```
 
 ### Detailed call stack
+
 By default the stack unwinding will only give something like this:
+
 ```shell
 thread 'main' panicked at 'index out of bounds: the len is 3 but the index is 99', src/main.rs:4:5
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
@@ -76,10 +81,11 @@ note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 Though there is the reason of panic and the line of the code is showing where the panic has occured, sometimes we want to get more info about the call stack.
 
 3. 🌟
+
 ```shell
 ## FILL in the blank to display the whole call stack
-## Tips: you can find the clue in the default panic info 
-$ __ cargo run
+## Tips: you can find the clue in the default panic info
+$ RUST_BACKTRACE=1 cargo run
 thread 'main' panicked at 'assertion failed: `(left == right)`
   left: `[97, 98, 99]`,
  right: `[96, 97, 98]`', src/main.rs:3:5
@@ -99,15 +105,16 @@ note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose bac
 ```
 
 ### `unwinding` and `abort`
+
 By default, when a `panic` occurs, the program starts *unwinding*, which means Rust walks back up the stack and cleans up the data from each function it encounters.
 
 But this walk back and clean up is a lot of work. The alternative is to immediately abort the program without cleaning up.
 
 If in your project you need to make the resulting binary as small as possible, you can switch from unwinding to aborting by adding below content to `Cargo.toml`:
+
 ```toml
 [profile.release]
 panic = 'abort'
 ```
-
 
 > You can find the solutions [here](https://github.com/sunface/rust-by-practice/blob/master/solutions/result-panic/panic.md)(under the solutions path), but only use it when you need it :)
