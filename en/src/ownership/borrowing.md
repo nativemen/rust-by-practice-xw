@@ -1,19 +1,22 @@
 # Reference and Borrowing
 
 ### Reference
+
 1. 🌟
+
 ```rust,editable
 
 fn main() {
    let x = 5;
    // Fill the blank
-   let p = __;
+    let p = &x;
 
    println!("the memory address of x is {:p}", p); // One possible output: 0x16fa3ac84
 }
 ```
 
 2. 🌟
+
 ```rust,editable
 
 fn main() {
@@ -21,20 +24,21 @@ fn main() {
     let y = &x;
 
     // Modify this line only
-    assert_eq!(5, y);
+    assert_eq!(5, *y);
 
     println!("Success!");
 }
 ```
 
 3. 🌟
+
 ```rust,editable
 
 // Fix error
 fn main() {
     let mut s = String::from("hello, ");
 
-    borrow_object(s);
+    borrow_object(&s);
 
     println!("Success!");
 }
@@ -43,13 +47,14 @@ fn borrow_object(s: &String) {}
 ```
 
 4. 🌟
+
 ```rust,editable
 
 // Fix error
 fn main() {
     let mut s = String::from("hello, ");
 
-    push_str(s);
+    push_str(&mut s);
 
     println!("Success!");
 }
@@ -60,14 +65,15 @@ fn push_str(s: &mut String) {
 ```
 
 5. 🌟🌟
+
 ```rust,editable
 
 fn main() {
     let mut s = String::from("hello, ");
 
     // Fill the blank to make it work
-    let p = __;
-    
+    let p = &mut s;
+
     p.push_str("world");
 
     println!("Success!");
@@ -75,9 +81,11 @@ fn main() {
 ```
 
 #### Ref
+
 `ref` can be used to take references to a value, similar to `&`.
 
 6. 🌟🌟🌟
+
 ```rust,editable
 
 fn main() {
@@ -85,10 +93,10 @@ fn main() {
 
     let r1 = &c;
     // Fill the blank，dont change other code
-    let __ r2 = c;
+    let ref r2 = c;
 
     assert_eq!(*r1, *r2);
-    
+
     // Check the equality of the two address strings
     assert_eq!(get_addr(r1),get_addr(r2));
 
@@ -102,16 +110,18 @@ fn get_addr(r: &char) -> String {
 ```
 
 ### Borrowing rules
+
 7. 🌟
+
 ```rust,editable
 
 // Remove something to make it work
 // Don't remove a whole line !
 fn main() {
-    let mut s = String::from("hello");
+    let s = String::from("hello");
 
-    let r1 = &mut s;
-    let r2 = &mut s;
+    let r1 = &s;
+    let r2 = &s;
 
     println!("{}, {}", r1, r2);
 
@@ -120,12 +130,14 @@ fn main() {
 ```
 
 #### Mutability
+
 8. 🌟 Error: Borrow an immutable object as mutable
+
 ```rust,editable
 
 fn main() {
     // Fix error by modifying this line
-    let  s = String::from("hello, ");
+    let mut s = String::from("hello, ");
 
     borrow_object(&mut s);
 
@@ -136,6 +148,7 @@ fn borrow_object(s: &mut String) {}
 ```
 
 9. 🌟🌟 Ok: Borrow a mutable object as immutable
+
 ```rust,editable
 
 // This code has no errors!
@@ -143,7 +156,7 @@ fn main() {
     let mut s = String::from("hello, ");
 
     borrow_object(&s);
-    
+
     s.push_str("world");
 
     println!("Success!");
@@ -153,7 +166,9 @@ fn borrow_object(s: &String) {}
 ```
 
 ### NLL
+
 10. 🌟🌟
+
 ```rust,editable
 
 // Comment one line to make it work
@@ -164,12 +179,13 @@ fn main() {
     r1.push_str("world");
     let r2 = &mut s;
     r2.push_str("!");
-    
-    println!("{}",r1);
+
+    // println!("{}",r1);
 }
 ```
 
 11. 🌟🌟
+
 ```rust,editable
 
 fn main() {
@@ -180,6 +196,7 @@ fn main() {
 
     // Add one line below to make a compiler error: cannot borrow `s` as mutable more than once at a time
     // You can't use r1 and r2 at the same time
+    r1.push_str("world!");
 }
 ```
 
