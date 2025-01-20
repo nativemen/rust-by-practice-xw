@@ -1,34 +1,38 @@
 ## Lifetime
+
 The compiler uses lifetime to ensure all borrows are valid. Typically, a variable's lifetime begins when it is created and ends when it is destroyed.
 
 ## The scope of lifetime
+
 1. 🌟
+
 ```rust,editable
 /* Annotate the lifetime of `i` and `borrow2` */
 
 // Lifetimes are annotated below with lines denoting the creation
 // and destruction of each variable.
-// `i` has the longest lifetime because its scope entirely encloses 
-// both `borrow1` and `borrow2`. The duration of `borrow1` compared 
+// `i` has the longest lifetime because its scope entirely encloses
+// both `borrow1` and `borrow2`. The duration of `borrow1` compared
 // to `borrow2` is irrelevant since they are disjoint.
 fn main() {
-    let i = 3;                                             
-    {                                                    
-        let borrow1 = &i; // `borrow1` lifetime starts. ──┐
-        //                                                │
-        println!("borrow1: {}", borrow1); //              │
-    } // `borrow1 ends. ──────────────────────────────────┘
-    {                                                    
-        let borrow2 = &i; 
-                                                        
-        println!("borrow2: {}", borrow2);               
-    }                                                   
-}   
+    let i = 3; // `i` 生命周期开始. ────────────────────────────┐
+    { //                                                        │
+        let borrow1 = &i; // `borrow1` 生命周期开始. ────────┐  │
+        //                                                   │  │
+        println!("borrow1: {}", borrow1); //                 │  │
+    } // `borrow1` 生命周期结束. ────────────────────────────┘  │
+    { //                                                        │
+        let borrow2 = &i; // `borrow1` 生命周期开始. ────────┐  │
+        //                                                   │  │
+        println!("borrow2: {}", borrow2); //                 │  │
+    } // `borrow1` 生命周期结束. ────────────────────────────┘  │
+} // `i` 生命周期结束. ─────────────────────────────────────────┘
 ```
 
 2. 🌟🌟
 
 **Example**
+
 ```rust
 {
     let x = 5;            // ----------+-- 'b
@@ -40,11 +44,10 @@ fn main() {
 }                         // ----------+
 ```
 
-
 ```rust,editable
 /* Annotate `r` and `x` as above, and explain why this code fails to compile, in the lifetime aspect. */
 
-fn main() {  
+fn main() {
     {
         let r;                // ---------+-- 'a
                               //          |
@@ -59,17 +62,20 @@ fn main() {
 ```
 
 ## Lifetime annotating
-The **borrow checker uses explicit lifetime annotations** to determine how long a reference should be valid. 
+
+The **borrow checker uses explicit lifetime annotations** to determine how long a reference should be valid.
 
 But for us users, in most cases, there is no need to annotate the lifetime, because there are several elision rules, before learning these rules, we need to know how to annotate lifetime manually.
 
 #### Function
+
 Ignoring elision rules, lifetimes in function signatures have a few constraints:
 
 - Any reference must have an annotated lifetime
 - Any reference being returned must have the same lifetime as one of the inputs or be static
 
 **Example**
+
 ```rust,editable
 // One input reference with lifetime `'a` which must live
 // at least as long as the function.
@@ -96,10 +102,10 @@ fn pass_x<'a, 'b>(x: &'a i32, _: &'b i32) -> &'a i32 { x }
 fn main() {
     let x = 7;
     let y = 9;
-    
+
     print_one(&x);
     print_multi(&x, &y);
-    
+
     let z = pass_x(&x, &y);
     print_one(z);
 
@@ -110,9 +116,10 @@ fn main() {
 ```
 
 3. 🌟
+
 ```rust,editable
 /* Make it work by adding proper lifetime annotation */
-fn longest(x: &str, y: &str) -> &str {
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
     if x.len() > y.len() {
         x
     } else {
@@ -122,7 +129,9 @@ fn longest(x: &str, y: &str) -> &str {
 
 fn main() {}
 ```
+
 4. 🌟🌟🌟
+
 ```rust,editable
 // `'a` must live longer than the function.
 // Here, `&String::from("foo")` would create a `String`, followed by a
@@ -130,8 +139,53 @@ fn main() {}
 // a reference to invalid data to be returned.
 
 /* Fix the error in three ways  */
-fn invalid_output<'a>() -> &'a String { 
-    &String::from("foo") 
+fn invalid_output() -> String {
+    String::from("foo")
+}
+
+fn main() {
+}
+```
+
+```rust,editable
+// `'a` must live longer than the function.
+// Here, `&String::from("foo")` would create a `String`, followed by a
+// reference. Then the data is dropped upon exiting the scope, leaving
+// a reference to invalid data to be returned.
+
+/* Fix the error in three ways  */
+fn invalid_output() -> &'static str {
+   "foo"
+}
+
+fn main() {
+}
+```
+
+```rust,editable
+// `'a` must live longer than the function.
+// Here, `&String::from("foo")` would create a `String`, followed by a
+// reference. Then the data is dropped upon exiting the scope, leaving
+// a reference to invalid data to be returned.
+
+/* Fix the error in three ways  */
+fn invalid_output<'a>(s: &'a String) -> &'a String {
+   s
+}
+
+fn main() {
+}
+```
+
+```rust,editable
+// `'a` must live longer than the function.
+// Here, `&String::from("foo")` would create a `String`, followed by a
+// reference. Then the data is dropped upon exiting the scope, leaving
+// a reference to invalid data to be returned.
+
+/* Fix the error in three ways  */
+fn invalid_output<'a>(s: &'a str) -> &'a str {
+   s
 }
 
 fn main() {
@@ -139,6 +193,7 @@ fn main() {
 ```
 
 5. 🌟🌟
+
 ```rust,editable
 // `print_refs` takes two references to `i32` which have different
 // lifetimes `'a` and `'b`. These two lifetimes must both be at
@@ -153,50 +208,52 @@ fn failed_borrow<'a>() {
     let _x = 12;
 
     // ERROR: `_x` does not live long enough
-    let y: &'a i32 = &_x;
-    // Attempting to use the lifetime `'a` as an explicit type annotation 
+    let y: &i32 = &_x;
+    // Attempting to use the lifetime `'a` as an explicit type annotation
     // inside the function will fail because the lifetime of `&_x` is shorter
     // than `'a` . A short lifetime cannot be coerced into a longer one.
 }
 
 fn main() {
     let (four, nine) = (4, 9);
-    
+
     // Borrows (`&`) of both variables are passed into the function.
     print_refs(&four, &nine);
-    // Any input which is borrowed must outlive the borrower. 
-    // In other words, the lifetime of `four` and `nine` must 
+    // Any input which is borrowed must outlive the borrower.
+    // In other words, the lifetime of `four` and `nine` must
     // be longer than that of `print_refs`.
-    
+
     failed_borrow();
-    // `failed_borrow` contains no references to force `'a` to be 
+    // `failed_borrow` contains no references to force `'a` to be
     // longer than the lifetime of the function, but `'a` is longer.
     // Because the lifetime is never constrained, it defaults to `'static`.
 }
 ```
 
 #### Structs
+
 6. 🌟
+
 ```rust,editable
 /* Make it work by adding proper lifetime annotation */
 
 // A type `Borrowed` which houses a reference to an
 // `i32`. The reference to `i32` must outlive `Borrowed`.
 #[derive(Debug)]
-struct Borrowed(&i32);
+struct Borrowed<'a>(&'a i32);
 
 // Similarly, both references here must outlive this structure.
 #[derive(Debug)]
-struct NamedBorrowed {
-    x: &i32,
-    y: &i32,
+struct NamedBorrowed<'a> {
+    x: &'a i32,
+    y: &'a i32,
 }
 
 // An enum which is either an `i32` or a reference to one.
 #[derive(Debug)]
-enum Either {
+enum Either<'a> {
     Num(i32),
-    Ref(&i32),
+    Ref(&'a i32),
 }
 
 fn main() {
@@ -215,8 +272,8 @@ fn main() {
 }
 ```
 
-
 7. 🌟🌟
+
 ```rust,editable
 /* Make it work */
 
@@ -226,29 +283,29 @@ struct NoCopyType {}
 #[derive(Debug)]
 struct Example<'a, 'b> {
     a: &'a u32,
-    b: &'b NoCopyType
+    b: &'b NoCopyType,
 }
 
-fn main()
-{ 
-  /* 'a tied to fn-main stackframe */
-  let var_a = 35;
-  let example: Example;
-  
-  {
-    /* Lifetime 'b tied to new stackframe/scope */ 
+fn main() {
+    let var_a = 35;
+    let example: Example;
+
+    // {
     let var_b = NoCopyType {};
-    
-    /* fixme */
-    example = Example { a: &var_a, b: &var_b };
-  }
-  
-  println!("(Success!) {:?}", example);
+
+    /* 修复错误 */
+    example = Example {
+        a: &var_a,
+        b: &var_b,
+    };
+    // }
+
+    println!("(Success!) {:?}", example);
 }
 ```
 
-
 8. 🌟🌟
+
 ```rust,editable
 
 #[derive(Debug)]
@@ -258,15 +315,15 @@ struct NoCopyType {}
 #[allow(dead_code)]
 struct Example<'a, 'b> {
     a: &'a u32,
-    b: &'b NoCopyType
+    b: &'b NoCopyType,
 }
 
 /* Fix function signature */
-fn fix_me(foo: &Example) -> &NoCopyType
-{ foo.b }
+fn fix_me<'b>(foo: &Example<'_, 'b>) -> &'b NoCopyType {
+    foo.b
+}
 
-fn main()
-{
+fn main() {
     let no_copy = NoCopyType {};
     let example = Example { a: &1, b: &no_copy };
     fix_me(&example);
@@ -275,9 +332,11 @@ fn main()
 ```
 
 ## Method
+
 Methods are annotated similarly to functions.
 
 **Example**
+
 ```rust,editable
 struct Owner(i32);
 
@@ -298,13 +357,14 @@ fn main() {
 ```
 
 9. 🌟🌟
+
 ```rust,editable
 /* Make it work by adding proper lifetime annotations */
-struct ImportantExcerpt {
-    part: &str,
+struct ImportantExcerpt<'a> {
+    part: &'a str,
 }
 
-impl ImportantExcerpt {
+impl<'a> ImportantExcerpt<'a> {
     fn level(&'a self) -> i32 {
         3
     }
@@ -314,6 +374,7 @@ fn main() {}
 ```
 
 ## Elision
+
 Some lifetime patterns are so common that borrow checker will allow you to omit them to save typing and improve readability.
 
 This is known as **Elision**. Elision exist in Rust only because these patterns are common.
@@ -321,14 +382,17 @@ This is known as **Elision**. Elision exist in Rust only because these patterns 
 For a more comprehensive understanding of elision, please see [lifetime elision](https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html#lifetime-elision) in the official book.
 
 10. 🌟🌟
+
 ```rust,editable
 /* Remove all the lifetimes that can be elided */
 
-fn input<'a>(x: &'a i32) {
+fn nput(x: &i32) {
     println!("`annotated_input`: {}", x);
 }
 
-fn pass<'a>(x: &'a i32) -> &'a i32 { x }
+fn pass(x: &i32) -> &i32 {
+    x
+}
 
 fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &'a str {
     x
@@ -338,8 +402,10 @@ struct Owner(i32);
 
 impl Owner {
     // Annotate lifetimes as in a standalone function.
-    fn add_one<'a>(&'a mut self) { self.0 += 1; }
-    fn print<'a>(&'a self) {
+    fn add_one(&mut self) {
+        self.0 += 1;
+    }
+    fn print(&self) {
         println!("`print`: {}", self.0);
     }
 }
@@ -356,4 +422,5 @@ enum Either<'a> {
 
 fn main() {}
 ```
+
 > You can find the solutions [here](https://github.com/sunface/rust-by-practice/blob/master/solutions/lifetime/basic.md)(under the solutions path), but only use it when you need it :)
